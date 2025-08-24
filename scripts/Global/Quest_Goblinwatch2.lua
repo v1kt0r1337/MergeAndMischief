@@ -1,75 +1,192 @@
+-- ============================================================================
+--  Goblinwatch 2 Quest
+-- ============================================================================
+-- Slots
 local A, B, C, D, E, F = 0, 1, 2, 3, 4, 5
+
+-- IDs
 local goblinwatchHouse = 1463
-local SamsonTessNPC_ID = 828
-local SamsonTessMonsterTxtId = 587 -- Expert Swordsman
-local UrokNPC_ID = 1081
-
 local houseBehindGoblinwatch = 1413
-local NewSorpigal = "oute3.odm"
-local humansNPCTextIndex = 2064
-local questName = "Quest_Goblinwatch2"
+local samsonTessNPC_ID = 828
+local SamsonTessMonsterTxtId = 587 -- Expert Swordsman
+local urokNPC_ID = 1081
+local janiceNPC_ID = 1076
+local nilbogNPC_ID = 111
 
+-- Locations
+local NewSorpigal = "oute3.odm"
 local decenthouseMapName = "decenthouse.blv"
 local decenthouseExitDoorEventId = 5
 
--- declared here for hoisting
-local OnQuestGiven 
-local OnQuestDone
-local EnterGoblinwatchApartment
-local CreateSamsonTessQuestBranch
+-- Quest IDs
+local Quest_Goblinwatch2 = "Quest_Goblinwatch2"
 
- Quest{
-    questName,
-	NPC = UrokNPC_ID,
-	Slot = B,
-	CanShow = function() return Game.NPC[SamsonTessNPC_ID].House == goblinwatchHouse or IsQuestGiven(questName) end,
-    CheckDone = function() return IsQuestGiven(questName) and Game.NPC[SamsonTessNPC_ID].House == 0 end, 
-    Gold = 2000,
-    Exp = 2000,
-	Done = function() 
-        OnQuestDone(true) 
-    end,
-    Give = function() OnQuestGiven() end,
-}.SetTexts{
-    Quest = "Kill Samson Tess ontop of Goblinwatch",
-    FirstTopic = "Retake the castle!",
-    TopicGiven = "Retake the castle!",
-    Give = [[
+-- Hoisted forward declarations
+local CreateSamsonTessQuestBranch
+local SendPartyBackToGoblinwatchApartmentEntrance
+
+-- Helpers --------------------------------------------------------------------
+local function InMap(map)
+    return Map.Name == map
+end
+local function InNewSorpigal()
+    return InMap(NewSorpigal)
+end
+local function QuestState(id, state)
+    return vars.Quests[id] == state
+end
+
+local function IsOriginalGoblinwathDone()
+    return Party.QBits[313] and Party.QBits[1324] and Party.QBits[1107] == false
+end
+
+-- QuestStage wrapper (cosmetic grouping) -------------------------------------
+local function QuestStage(name)
+    return function(block)
+        return block
+    end
+end
+
+-- ============================================================================
+--  Quest stages
+-- ============================================================================
+
+QuestStage "Start" {
+    NPCTopic {
+        Topic = "Fleeing Goblin",
+        Slot = E,
+        NPC = janiceNPC_ID,
+        Text = [[
+When you took Goblinwatch, a goblin was reported fleeing in the direction
+of the house south east of Goblinwatch. 
+
+There lives a man there called Dorf. He is a bit of an oddball,
+but please check if he is ok.]],
+        CanShow = function()
+            return InNewSorpigal() and vars.Quests[Quest_Goblinwatch2] ~= 'Done' and IsOriginalGoblinwathDone()
+        end
+    }, Quest{
+        Quest_Goblinwatch2,
+        NPC = urokNPC_ID,
+        Slot = E,
+        CanShow = function()
+            return InNewSorpigal() and
+                       (Game.NPC[samsonTessNPC_ID].House == goblinwatchHouse or vars.Quests[Quest_Goblinwatch2] ~= nil)
+        end,
+        CheckDone = function()
+            return vars.Quests[Quest_Goblinwatch2] ~= nil and Game.NPC[samsonTessNPC_ID].House == 0
+        end,
+        Gold = 2000,
+        Exp = 2000,
+        Done = function()
+            svars.HasNotLeftUrok = true
+            Game.NPC[urokNPC_ID].House = goblinwatchHouse
+            Sleep2(function()
+                svars.HasNotLeftUrok = nil
+            end, 1)
+        end,
+        Give = function()
+            CreateSamsonTessQuestBranch()
+        end
+    }.SetTexts {
+        Quest = "Kill Samson Tess ontop of Goblinwatch",
+        FirstTopic = "Retake the castle!",
+        TopicGiven = "Retake the castle!",
+        Give = [[
 Kill filthy human living in my castle!
 
 I will give you riches!]],
-    Undone = [[
+        Undone = [[
 Why is the filthy human still living in my castle? 
 
 Think about the smells!
 
-[Urok shakes his head in frustration]
-]],
-    Done = [[
+[Urok shakes his head in frustration] ]],
+        Done = [[
 The filthy man swine is dead, back to the castle I go!
 
-Tonight theres meat on the menu!
+Looks like meats back on the menu!
 
-[Urok raises his right hand in victory]
-]],
-}
+[Urok raises his right hand in victory] ]]
+    }}
 
-OnQuestGiven = function()
-    -- remove topics from SamsonTessNPC_ID
-    NPCTopic{Slot = A, NPC = SamsonTessNPC_ID}
-    NPCTopic{Slot = C, NPC = SamsonTessNPC_ID} 
-    CreateSamsonTessQuestBranch()
-end
+QuestStage "Given" {
+    NPCTopic {
+        Slot = A,
+        NPC = urokNPC_ID,
+        Topic = "Humans",
+        Text = [[
+Humans took the castle from us! Stupid humans!
+
+Dorf sad for us. Dorf ok.]],
+        CanShow = function()
+            return InNewSorpigal() and IsOriginalGoblinwathDone()
+        end
+    }}
+
+QuestStage "DoneBeforeLeavingDorf" {
+    NPCTopic {
+        Topic = "Back to Goblinwatch",
+        Slot = B,
+        NPC = urokNPC_ID,
+        Text = "Meet me back ontop of Gobliwatch, theres more work to be done.",
+        CanShow = function()
+            return InNewSorpigal() and QuestState(Quest_Goblinwatch2, "Done") and svars.HasNotLeftUrok
+        end
+    }}
+
+QuestStage "Done" {
+    NPCTopic {
+        Slot = A,
+        NPC = urokNPC_ID,
+        Topic = "Humans",
+        Text = [[
+[Urok laughts eerily]
+
+Humans think they are safe in their town,
+but now Urok is back! 
+
+And soon comes Lord Nilbog.]],
+        CanShow = function()
+            return InNewSorpigal() and QuestState(Quest_Goblinwatch2, "Done") and svars.HasNotLeftUrok == nil
+        end
+    }, NPCTopic {
+        Topic = "Lord Nilbog",
+        Slot = B,
+        NPC = urokNPC_ID,
+        Text = "The lord of Goblinwatch will return soon.",
+        CanShow = function()
+            return InNewSorpigal() and QuestState(Quest_Goblinwatch2, "Done") and svars.HasNotLeftUrok == nil
+        end
+    }, Greeting {
+        NPC = urokNPC_ID,
+        Text = [[
+It's good to be back at castle, but I can still smell
+the stink of the filthy human!
+
+Atleast he had the decency to taste good!]],
+        CanShow = function()
+            return InNewSorpigal() and QuestState(Quest_Goblinwatch2, "Done") and svars.HasNotLeftUrok == nil
+        end
+    }}
+
+-- ============================================================================
+--  Branching Quest: Samson Tess
+-- ============================================================================
 
 CreateSamsonTessQuestBranch = function()
-    --[[ 
-        Second step of the quest related to killing Samson Tess
-        This quest is branched
-    ]]
+    NPCTopic {
+        Slot = B,
+        NPC = samsonTessNPC_ID
+    }
+    NPCTopic {
+        Slot = C,
+        NPC = samsonTessNPC_ID
+    }
     local QuestBase = {}
     local function MyQuest(t)
-        table.copy(QuestBase, t)  -- copy common values
-        QuestBase.Slot = QuestBase.Slot and QuestBase.Slot + 1  -- auto-increment Slot
+        table.copy(QuestBase, t)
+        QuestBase.Slot = QuestBase.Slot and QuestBase.Slot + 1
         return Quest(t)
     end
 
@@ -77,440 +194,175 @@ CreateSamsonTessQuestBranch = function()
         QuestBranch(t.NewBranch)
     end
 
-    QuestNPC = SamsonTessNPC_ID
-    QuestBase = {Branch = "", Slot = D, Ungive = SetQuestBranch}
-    MyQuest{
-        CanShow = function () return IsQuestGiven(questName) end,
+    QuestNPC = samsonTessNPC_ID
+    QuestBase = {
+        Branch = "",
+        Slot = A,
+        Ungive = SetQuestBranch
+    }
+
+    MyQuest {
+        CanShow = function()
+            return InNewSorpigal() and QuestState(Quest_Goblinwatch2, "Given")
+        end,
         NewBranch = "SamsonTessFight",
         Texts = {
             Topic = "Retake the castle!",
+            TopicGiven = "Retake the castle!",
             Ungive = [[
 So the goblins wants the castle back...
 
-[Samson looks at you with suspecioun]
+[Samson looks at you with suspicion]
 
 Your not going to help him are you?]]
         }
     }
 
-    QuestBase = {Branch = "SamsonTessFight", Slot = D, Ungive = SetQuestBranch}
-    MyQuest{
+    QuestBase = {
+        Branch = "SamsonTessFight",
+        Slot = A,
+        Ungive = SetQuestBranch
+    }
+
+    MyQuest {
         NewBranch = "SamsonTessFightNo",
         Texts = {
             Topic = "No of course not!",
-            Ungive = "Sorry for doubting you. I'm thankful for your contribution against the goblins"
+            Ungive = "Sorry for doubting you. I'm thankful for your contribution against the goblins."
         }
     }
 
-    MyQuest{
+    MyQuest {
         NewBranch = "SamsonTessFightYes",
-        Ungive = function(t) EnterGoblinwatchApartment() end,
+        Ungive = function(t)
+            Sleep(2000, 1)
+            ExitScreen()
+            Sleep(1, 1)
+            EnterDecentHouseMap(Quest_Goblinwatch2)
+        end,
         Texts = {
             Topic = "Your end has come Samson!",
-            Ungive = "Traitor!",
+            Ungive = "Traitor!"
         }
     }
 end
 
+-- ============================================================================
+--  Goblinwatch 2: helpers & event handlers
+-- ============================================================================
 
-EnterGoblinwatchApartment = function()
-    Sleep(2000, 1)
-    vars.movedIntoGoblinwatchApartment = true
-    vars.initiateKillTess = true
-    evt.PlaySound(6) -- squeaky door sound (might sound off since already inside?)
-    evt.MoveToMap{Name=decenthouseMapName, Direction=1000}
+-- Reusable CanShow helpers
+local function SamsonQuestActive()
+    return vars.decentHousePurpose == Quest_Goblinwatch2
+end
+local function UrokShouldMove()
+    return vars.Quests[Quest_Goblinwatch2] ~= "Done" and IsOriginalGoblinwathDone()
 end
 
+-- ============================================================================
+--  Map / NPC helpers
+-- ============================================================================
 
 local function CreateEnemyTess()
-    local SamsonTessMonsterTxtId = 587
-    local monsterSamsonTess
+    local monster
     for _, m in Map.Monsters do
-        -- TODO missing robustness: for this loop to work no other monsters sharing Samson Tess index need to exist  
         if m.Id == SamsonTessMonsterTxtId then
-            monsterSamsonTess = m
+            monster = m
         end
     end
-    if monsterSamsonTess == nil then
-        monsterSamsonTess = SummonMonster(SamsonTessMonsterTxtId, -115, 55, 1, false)
+    if not monster then
+        monster = SummonMonster(SamsonTessMonsterTxtId, -115, 55, 1, true)
     end
-    -- changing these doesn't matter because it will reset after map leave
-    monTxt = Game.MonstersTxt[SamsonTessMonsterTxtId]
-    monTxt.Name = "Samson Tess"
-    return monsterSamsonTess
+    -- assign readable name
+    Game.MonstersTxt[SamsonTessMonsterTxtId].Name = "Samson Tess"
+    return monster
 end
 
-local function SendPartyBackToGoblinwatchApartmentEntrance()
-    evt.PlaySound(7) -- slam door sound
-    evt.MoveToMap{Name=NewSorpigal, X=-18303, Y=-15535, Z=1985, Direction=1538}
-end
-
-function events.LeaveMap() 
-    if Map.Name == decenthouseMapName and vars.movedIntoGoblinwatchApartment then
-        vars.movedIntoGoblinwatchApartment = nil
-        vars.initiateKillTess = nil
-        -- removes all monsters in the map for later reuse
-        for _, m in Map.Monsters do
-            m.AIState = const.AIState.Removed
-         end
-    end
-end
-
-function events.LoadMapScripts()
-    if Map.Name == decenthouseMapName and vars.movedIntoGoblinwatchApartment then
-        -- this sets the bolstering to be the same as New Sorpigal
-        Map.MapStatsIndex = 151 
-    end
-end
-
-
-function events.MonsterKilled(mon) 
-    if Map.Name == decenthouseMapName and Game.MonstersTxt[mon.Id].Name == "Samson Tess" then
-        vars.SamsonTessDead = true;
-    end
-end
-
-
-OnQuestDone = function(waitWithDialog)
-    NPCTopic{
-        Topic = "Back to Goblinwatch",
-        Slot = B,
-        Text = "Meet me back ontop of Gobliwatch, theres more work to be done.",
-        NPC = UrokNPC_ID,
+SendPartyBackToGoblinwatchApartmentEntrance = function()
+    evt.PlaySound(7) -- slam door
+    evt.MoveToMap {
+        Name = NewSorpigal,
+        X = -18303,
+        Y = -15535,
+        Z = 1985,
+        Direction = 1538
     }
-
-    -- Prevent new topics from being instantly available
-    function InitializeNewDialog() 
-        Game.NPC[UrokNPC_ID].House = goblinwatchHouse
-        Game.NPCText[humansNPCTextIndex] = [[
-[Urok laughts eerily]
-
-Humans think they are safe in their town, but now Urok is back! 
-
-And soon comes Lord Nilbog.]]
-            
-        NPCTopic{
-            Topic = "Lord Nilbog",
-            Slot = B,
-            Text = "The lord of Goblinwatch will return soon.",
-            NPC = UrokNPC_ID,
-        }
-    
-        Greeting{
-            NPC = UrokNPC_ID,
-            Text =  [[
-It's good to be back at castle, but I can still smell the stink of the filthy human!
-
-Atleast he had the decency to taste good!]]
-        }            
-    end
-    
-    if (waitWithDialog) then
-        Sleep2(function() InitializeNewDialog() end, 1, nil, nil)
-    else 
-        InitializeNewDialog()
-    end
- end
-
-
-local function InitializeQuest() 
-    if Map.Name ~= NewSorpigal then
-        RemoveTimer()
-        hasCreatedTimer = false
-        return
-    end
-    if Game.NPC[SamsonTessNPC_ID].House == goblinwatchHouse and IsQuestGiven(questName) == false then
-        Game.NPCText[humansNPCTextIndex] = [[
-Humans took the castle from us! Stupid humans!
-
-Dorf sad for us. Dorf ok.]]
-    end
 end
 
 local hasCreatedTimer = false
-function events.AfterLoadMap() 
-    if (Map.Name == decenthouseMapName and vars.movedIntoGoblinwatchApartment and vars.initiateKillTess) then
-        local monsterSamsonTess = CreateEnemyTess() 
-        evt.Map[decenthouseExitDoorEventId] = function() 
-            if monsterSamsonTess.HP > 0 then
-                Game.ShowStatusText(Game.MonstersTxt[SamsonTessMonsterTxtId].Name  .. " is blocking your escape!")
-            else 
+local function MoveUrokToHouseTimer()
+    if not InNewSorpigal() then
+        if hasCreatedTimer then
+            RemoveTimer(MoveUrokToHouseTimer)
+            hasCreatedTimer = false
+        end
+        return
+    end
+
+    if UrokShouldMove() then
+        Game.NPC[urokNPC_ID].House = houseBehindGoblinwatch
+        if hasCreatedTimer then
+            RemoveTimer(MoveUrokToHouseTimer)
+            hasCreatedTimer = false
+        end
+        return
+    end
+
+    if not hasCreatedTimer then
+        Timer(MoveUrokToHouseTimer, const.Minute * 3)
+        hasCreatedTimer = true
+    end
+end
+
+-- ============================================================================
+--  Event Handlers
+-- ============================================================================
+
+function events.LeaveMap()
+    if InMap(decenthouseMapName) and SamsonQuestActive() then
+        vars.decentHousePurpose = nil
+    end
+end
+
+function events.MonsterKilled(mon)
+    if InMap(decenthouseMapName) and Game.MonstersTxt[mon.Id].Name == "Samson Tess" then
+        vars.SamsonTessDead = true
+    end
+end
+
+function events.AfterLoadMap()
+    -- Samson Tess apartment logic
+    if InMap(decenthouseMapName) and SamsonQuestActive() then
+        local monster = CreateEnemyTess()
+        evt.Map[decenthouseExitDoorEventId] = function()
+            if monster.HP > 0 then
+                Game.ShowStatusText("Samson Tess is blocking your escape!")
+            else
                 SendPartyBackToGoblinwatchApartmentEntrance()
             end
         end
     end
-    if Map.Name == NewSorpigal then
-        if IsQuestGiven(questName) == false and hasCreatedTimer == false  then
-            Timer(function() InitializeQuest() end, const.Minute*3)
-            hasCreatedTimer = true
-        end
-        if vars.Quests[questName] == "Given" then
-            Game.NPCText[humansNPCTextIndex] = [[
-Humans took the castle from us! Stupid humans!
 
-Dorf sad for us. Dorf ok.]]
-            OnQuestGiven()
+    -- Urok / Samson NPC logic in New Sorpigal
+    if InNewSorpigal() then
+        -- create timer for Urok movement if quest not started
+        if vars.Quests[Quest_Goblinwatch2] == nil and not hasCreatedTimer then
+            MoveUrokToHouseTimer()
         end
 
-        if vars.Quests[questName] == "Done" then
-            OnQuestDone()
+        -- update Urok's house
+        if UrokShouldMove() then
+            Game.NPC[urokNPC_ID].House = houseBehindGoblinwatch
+        elseif QuestState(Quest_Goblinwatch2, "Done") then
+            Game.NPC[urokNPC_ID].House = goblinwatchHouse
+        end
+
+        if QuestState(Quest_Goblinwatch2, "Given") and Game.NPC[samsonTessNPC_ID].House == goblinwatchHouse then
+            CreateSamsonTessQuestBranch()
+        end
+
+        if vars.SamsonTessDead then
+            Game.NPC[samsonTessNPC_ID].House = 0
         end
     end
-
 end
-
-
--- findNPC("Janice")
--- ---- Log File Output: ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- npc index	1076
--- {
--- 	Bits = 2,
--- 	EventA = 1319,
--- 	EventB = 1032,
--- 	EventC = 1712,
--- 	EventD = 0,
--- 	EventE = 0,
--- 	EventF = 0,
--- 	Events = {
--- 		1319,
--- 		1032,
--- 		1712,
--- 		0,
--- 		0,
--- 		0
--- 	},
--- 	Exist = true,
--- 	Fame = 0,
--- 	Greet = 0,
--- 	Hired = false,
--- 	House = 208,
--- 	Joins = 0,
--- 	Name = "Janice",
--- 	NewsTopic = 0,
--- 	Pic = 20,
--- 	Profession = 72,
--- 	Rep = 0,
--- 	Sex = 0,
--- 	TalkedBefore = true,
--- 	TalkedOnce = false,
--- 	TellsNews = 0,
--- 	ThreatenedBefore = false,
--- 	UsedSpell = 0
--- }
-
-
-
--- BEFORE Goblinwatch quest:
--- > findNPC("Urok")
--- ---- Log File Output: ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- npc index	1081
--- {
--- 	Bits = 1,
--- 	EventA = 1660,
--- 	EventB = 0,
--- 	EventC = 0,
--- 	EventD = 0,
--- 	EventE = 0,
--- 	EventF = 0,
--- 	Events = {
--- 		1660,
--- 		0,
--- 		0,
--- 		0,
--- 		0,
--- 		0
--- 	},
--- 	Exist = true,
--- 	Fame = 0,
--- 	Greet = 0,
--- 	Hired = false,
--- 	House = 1463,
--- 	Joins = 0,
--- 	Name = "Urok",
--- 	NewsTopic = 0,
--- 	Pic = 1031,
--- 	Profession = 0,
--- 	Rep = 0,
--- 	Sex = 0,
--- 	TalkedBefore = false,
--- 	TalkedOnce = true,
--- 	TellsNews = 0,
--- 	ThreatenedBefore = false,
--- 	UsedSpell = 0
--- }
-
--- after goblinwatch
-
--- {
--- 	Bits = 2,
--- 	EventA = 1660,
--- 	EventB = 0,
--- 	EventC = 0,
--- 	EventD = 0,
--- 	EventE = 0,
--- 	EventF = 0,
--- 	Events = {
--- 		1660,
--- 		0,
--- 		0,
--- 		0,
--- 		0,
--- 		0
--- 	},
--- 	Exist = true,
--- 	Fame = 0,
--- 	Greet = 0,
--- 	Hired = false,
--- 	House = 0,
--- 	Joins = 0,
--- 	Name = "Urok",
--- 	NewsTopic = 0,
--- 	Pic = 1031,
--- 	Profession = 0,
--- 	Rep = 0,
--- 	Sex = 0,
--- 	TalkedBefore = true,
--- 	TalkedOnce = false,
--- 	TellsNews = 0,
--- 	ThreatenedBefore = false,
--- 	UsedSpell = 0
--- }
-
-
--- new owner of goblin watch
-
--- npc index	828
--- {
--- 	Bits = 1,
--- 	EventA = 1661,
--- 	EventB = 0,
--- 	EventC = 1032,
--- 	EventD = 0,
--- 	EventE = 0,
--- 	EventF = 0,
--- 	Events = {
--- 		1661,
--- 		0,
--- 		1032,
--- 		0,
--- 		0,
--- 		0
--- 	},
--- 	Exist = true,
--- 	Fame = 0,
--- 	Greet = 0,
--- 	Hired = false,
--- 	House = 1463,
--- 	Joins = 0,
--- 	Name = "Samson Tess",
--- 	NewsTopic = 0,
--- 	Pic = 429,
--- 	Profession = 73,
--- 	Rep = 0,
--- 	Sex = 0,
--- 	TalkedBefore = false,
--- 	TalkedOnce = true,
--- 	TellsNews = 0,
--- 	ThreatenedBefore = false,
--- 	UsedSpell = 0
--- }
-
-
-
-
--- Door
--- Id = 1
--- Speed1 = 50
--- Speed2 = 50
--- MoveLength = 128
--- DirectionX = -1
--- DirectionY = 0
--- DirectionZ = 0
--- NoSound = false
--- StartState2 = false
--- VertexFilter = "Free"      -- (nil, "Free", "Shrink" or "Grow")
--- VertexFilterParam1 = nil
--- VertexFilterParam2 = nil
--- ClosePortal = false
--- event = 5
-
-
--- sack
--- X = -288
--- Y = -64
--- Z = 0
--- Direction = 0
--- Id = 0
--- Event = 1
--- TriggerRadius = 0
--- TriggerByTouch = true
--- TriggerByMonster = false
--- TriggerByObject = false
--- ShowOnMap = false
--- IsChest = false
--- Invisible = false
--- IsObeliskChest = false
-
-
-
--- boxes
--- > Bitmap = "CBTINY"
--- BitmapU = 256
--- BitmapV = 64
--- Id = 0
--- Event = 3
--- TriggerByClick = true
--- TriggerByStep = false
--- IsSecret = false
--- Untouchable = false
--- Invisible = false
--- DontShowOnMap = false
--- MovedByDoor = false
--- DoorStaticBmp = false
--- MultiDoor = false
--- AlignTop = false
--- AlignBottom = false
--- AlignLeft = false
--- AlignRight = false
--- IsWater = false
--- IsSky = false
--- IsLava = false
--- ScrollUp = false
--- ScrollDown = false
--- ScrollLeft = false
--- ScrollRight = false
--- AnimatedTFT = false
-
--- foodbowl
--- DecName = "foodbowl"
--- X = -344
--- Y = 64
--- Z = 0
--- Direction = 0
--- Id = 0
--- Event = 2
--- TriggerRadius = 0
--- TriggerByTouch = true
--- TriggerByMonster = false
--- TriggerByObject = false
--- ShowOnMap = false
--- IsChest = false
--- Invisible = false
--- IsObeliskChest = false
-
--- barrel
--- DecName = "smlbarel"
--- X = 320
--- Y = 336
--- Z = 0
--- Direction = 0
--- Id = 0
--- Event = 4
--- TriggerRadius = 0
--- TriggerByTouch = true
--- TriggerByMonster = false
--- TriggerByObject = false
--- ShowOnMap = false
--- IsChest = false
--- Invisible = false
--- IsObeliskChest = false

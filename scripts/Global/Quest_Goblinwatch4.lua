@@ -1,35 +1,30 @@
 local A, B, C, D, E, F = 0, 1, 2, 3, 4, 5
 local NewSorpigal = "oute3.odm"
-local questName = "Quest_Goblinwatch4"
-local prevQuest = "Quest_Goblinwatch3"
+local Quest_Goblinwatch4 = "Quest_Goblinwatch4"
+local Quest_Goblinwatch3 = "Quest_Goblinwatch3"
 local goblinwatchHouse = 1463
-local UrokNPC_ID = 1081
-local NilbogNPC_ID = 1239
+local urokNPC_ID = 1081
+local nilbogNPC_ID = 111
 
 local guardId = 553
 local captainId = 555
 
--- declared here for hoisting
-local MakeGoblinsFriendly
+local function MakeGuardsHostile()
+    local guardsMon = (guardId + 2):div(3)
+    Game.HostileTxt[guardsMon][0] = 1
+end
 
-
-Greeting{
-    NPC = NilbogNPC_ID,
-    Text = "Greetings friends of Goblins. Urok speaks highly of you."
-}    
-
-NPCTopic{
-    NPC = NilbogNPC_ID,
-    Topic = "Finish business with Urok",
-    Text = "Finish your business with Urok, then come talk to me.",
-    CanShow = function() return vars.Quests[prevQuest] == "Given" end
-}
-
+local function MakeGoblinsFriendly()
+    vars.NewSorpigalGoblinsFriendly = true
+    local goblinId = 550
+    local goblinMon = (goblinId + 2):div(3)
+    Game.HostileTxt[goblinMon][0] = 0
+end
 
 Quest{
-    questName,
-    Slot = A,
-    NPC = NilbogNPC_ID,
+    Quest_Goblinwatch4,
+    Slot = E,
+    NPC = nilbogNPC_ID,
     Give = function()
         -- respawn all guards if dead
         for _, mon in Map.Monsters do
@@ -39,11 +34,14 @@ Quest{
             end
         end
     end,
-    CanShow = function() return vars.Quests[prevQuest] == "Done" end,
+    CanShow = function()
+        return Map.Name == NewSorpigal and vars.Quests[Quest_Goblinwatch3] == "Done"
+    end,
     CheckDone = function()
         local allGuardsDead = true
         for _, m in Map.Monsters do
-            if (m.Id == guardId or m.Id == captainId) and (m.AIState ~= const.AIState.Dead and m.AIState ~= const.AIState.Removed) then
+            if (m.Id == guardId or m.Id == captainId) and
+                (m.AIState ~= const.AIState.Dead and m.AIState ~= const.AIState.Removed) then
                 allGuardsDead = false
             end
         end
@@ -53,9 +51,9 @@ Quest{
         MakeGoblinsFriendly()
     end,
     Gold = 2000,
-    Exp = 2000,
-}.SetTexts{
-    Quest = "Kill the guards of New Sorpigal", 
+    Exp = 2000
+}.SetTexts {
+    Quest = "Kill the guards of New Sorpigal",
     FirstTopic = "I got work for you",
     TopicGiven = "Kill the guards of New Sorpigal",
     Give = [[
@@ -74,16 +72,12 @@ You have shown yourself a true friend of goblins.
 I will rein in the other goblins. 
 
 The other goblins in New Sorpigal will no longer attack you unprovoked.]],
-    Award = "Friendly with the Goblins of New Sorpigal",
+    Award = "Befriended the Goblins of New Sorpigal"
 }
 
-local function MakeGuardsHostile()
-    local guardsMon = (guardId + 2):div(3)
-    Game.HostileTxt[guardsMon][0] = 1
-end
-
-function events.MonsterKilled(mon, monIndex) 
-    if Map.Name == NewSorpigal and vars.Quests[questName] == "Given" and vars.AllGuardsInNSDead ~= true and mon.Id == guardId then
+function events.MonsterKilled(mon, monIndex)
+    if Map.Name == NewSorpigal and vars.Quests[Quest_Goblinwatch4] == "Given" and vars.AllGuardsInNSDead ~= true and
+        mon.Id == guardId then
         MakeGuardsHostile()
         -- check if all guards are dead or removed
         local guardsLeft = 0
@@ -105,20 +99,16 @@ function events.MonsterKilled(mon, monIndex)
     end
 end
 
-
-MakeGoblinsFriendly = function()
-    vars.NewSorpigalGoblinsFriendly = true
-    local goblinId = 550
-    local goblinMon = (goblinId + 2):div(3)
-    Game.HostileTxt[goblinMon][0] = 0
+function events.AfterLoadMap(WasInGame)
+    if Map.Name == NewSorpigal then
+        if vars.Quests[Quest_Goblinwatch4] == "Given" then
+            -- forgot to document why sleep, but I think there was a race condition
+            Sleep2(function()
+                MakeGuardsHostile()
+            end, 2, nil, nil)
+        end
+        if vars.NewSorpigalGoblinsFriendly then
+            MakeGoblinsFriendly()
+        end
+    end
 end
-
-
--- sound of npcs:
--- SoundDie = 2931,
--- SoundFidget = 0,
--- SoundGetHit = 2932,
--- SoundGotHit = 2932,
-
--- sound of goblins
---
