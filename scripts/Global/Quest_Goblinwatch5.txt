@@ -1,0 +1,579 @@
+local A, B, C, D, E, F = 0, 1, 2, 3, 4, 5
+local goblinwatchHouse = 1463
+local nilbogNPC_ID = 111
+local urokNPC_ID = 1081
+local janiceNPC_ID = 1076
+local frankFairchild_ID = 788
+local houseBehindGoblinwatch = 1413
+local NewSorpigal = "oute3.odm"
+local Quest_Goblinwatch5 = "Quest_Goblinwatch5"
+local Quest_Goblinwatch4 = "Quest_Goblinwatch4"
+local questAlternativeEnding = "Quest_Goblinwatch5_AlternativeEnding"
+local questAlternativeEndingUrukTraitorAward = "Quest_Goblinwatch5_AlternativeUrukTraitorAward"
+local willburHumphrey_ID = 789
+
+local decenthouseMapName = "decenthouse.blv"
+local decenthouseExitDoorEventId = 5
+
+local CreateKillLordNilbogQuestBranch
+local CreateMonsterLordNilbog
+local MakeGoblinsHostile
+local MakeGoblinsHostileToPeasants
+local MakeGoblinsFriendlyToPeasants
+
+local MoveGoblinsIntoNewSorpigal
+
+-- goblin pic 624  622, maybe 677, 602 (female), 638 (stygg), 638, 613 (female),  547(f), 550(f),607(f),
+-- sjekke begge disse(626,1307),543 (f),552 (f ganske grei),
+
+
+-- declared here for hoisting
+
+local GiveFrankSurrenderQuest
+local PlayFightSounds
+
+function events.AfterLoadMap() 
+    if Map.Name == NewSorpigal then
+
+        if (vars.Quests[Quest_Goblinwatch5] == "Given") then
+            GiveFrankSurrenderQuest()
+            MakeGoblinsHostileToPeasants()
+        end
+
+        if vars.LordNilbogDead then
+            Game.NPC[nilbogNPC_ID].House = 0
+            Game.NPC[urokNPC_ID].House = houseBehindGoblinwatch
+            -- Can be explained by fear?
+            MakeGoblinsFriendlyToPeasant()
+        end
+
+        if  vars.Quests[Quest_Goblinwatch5] == "Done" then
+            MoveGoblinsIntoNewSorpigal()
+            local goblinMonId = 550
+            -- turn goblins friendly to peasants
+            local goblinMon = (goblinMonId + 2):div(3)
+            local peasantMon = (595 + 2):div(3)
+            Game.HostileTxt[goblinMon][peasantMon] = 0
+        end
+
+        if (vars.LordNilbogDead and vars.Quests[questAlternativeEndingUrukTraitorAward] ~= "Done" and svars[questAlternativeEndingUrukTraitorAward] == nil) then
+            svars[questAlternativeEndingUrukTraitorAward] = true
+            Quest_Goblinwatch5_GiveUrukTraitorAwardQuest()
+        end
+
+        if (vars.AcceptKillLordNilbog) then 
+            CreateKillLordNilbogQuestBranch()
+        end
+
+        if vars.Quests[Quest_Goblinwatch5] == "Done" then
+            local guardId = 553
+            local goblinMonId = 550
+            for i, m in Map.Monsters do    
+                -- if map is refilled with guards we turn them into goblins
+                if m.Id == guardId and (m.AIState ~= const.AIState.Dead) then
+                   SummonMonster(goblinMonId, m.X, m.Y, m.Z, true)
+                   m.AIState = const.AIState.Removed
+                end
+            end
+        end
+    end
+
+end
+
+PlayFightSounds = function()
+    Sleep(800, 1)
+    evt.PlaySound(309)
+    Sleep(1400, 1)
+    evt.PlaySound(316)
+    Sleep(1800,1)
+    evt.PlaySound(311)
+end
+
+
+--------------------------------------------------------------------------------
+--                              Part 1                                        --
+--------------------------------------------------------------------------------
+
+Quest{
+    Quest_Goblinwatch5,
+    Slot = E,
+    NPC = nilbogNPC_ID,
+    Give = function()
+        local goblinMonId = 550
+        local goblinShamanMonId = 551
+        -- summons goblins inside New Sorpigal Town
+        SummonMonster(goblinMonId, -13117, -8893, 161, true)
+        SummonMonster(goblinMonId, -10252, -9420, 161, true)
+        SummonMonster(goblinMonId, -9350, -9035, 161, true)
+        SummonMonster(goblinMonId, -9789, -8824, 161, true)
+        SummonMonster(goblinShamanMonId, -9672, -8431, 161, true)
+        SummonMonster(goblinMonId, -9376, -7920, 161, true)
+        SummonMonster(goblinMonId, -5884, -7917, 161, true)
+        SummonMonster(goblinMonId, -5947, -7622, 161, true)
+        SummonMonster(goblinMonId, -6470, -5788, 161, true)
+
+        MakeGoblinsHostileToPeasants()
+        PlayFightSounds()
+        GiveFrankSurrenderQuest()
+    end,
+    CanShow = function() return Map.Name == NewSorpigal and vars.Quests[Quest_Goblinwatch4] == "Done" and vars.AcceptKillLordNilbog ~= true end,
+    CheckDone = function()
+        return vars.FrankFairchildHasSurrendered end,
+    Done = function()
+        svars.GoblinsWonWaitWithChanges = true
+        Sleep2(function() 
+            svars.GoblinsWonWaitWithChanges = nil
+            MoveGoblinsIntoNewSorpigal()
+        end, 1, nil, nil)
+    end,
+    Gold = 10000,
+    Exp = 10000,
+}.SetTexts{
+    Quest = "Take New Sorpigal", 
+    FirstTopic = "Take New Sorpigal",
+    TopicGiven = "Force mayor Frank Fairchild to surrender the town",
+    Give = [[
+[Lord Nilbogs gives you a wide smile]
+
+Can you hear that sound? Thats my goblins taking New Sorpigal.
+
+Force mayor Frank Fairchild to surrender the town!]],
+    Undone = "Frank Fairchild has still not surrendered the town",
+    Done = [[
+The town is ours!
+
+I will reign in castle, and my Urok will be the towns mayor!]],
+    Award = "Helped the Goblins take New Sorpigal",
+}
+
+
+--------------------------------------------------------------------------------
+--                              Goblins won                                   --
+--------------------------------------------------------------------------------
+local function CanShowGoblinWon()
+    return Map.Name == NewSorpigal and vars.Quests[Quest_Goblinwatch5] == 'Done' 
+end
+
+local function CanShowGoblinWonDialogsThatShouldWait()
+    return CanShowGoblinWon() and  svars.GoblinsWonWaitWithChanges == nil
+end
+
+
+NPCTopic{
+    Topic = "Mayor Urok",
+    NPC = frankFairchild_ID,
+    CanShow = CanShowGoblinWon,
+    Slot = E,
+    Text = [[
+Mayor Urok...
+
+Well, at least he lets me do the real work while he struts around looking important.
+
+Basically, business is as usual.
+
+Janice, however... I think she secretly lusts after that fell beast.]],
+}
+
+NPCTopic{
+    Topic = "The Goblins",
+    Slot = E,
+    CanShow = CanShowGoblinWon,
+    Text = [[
+Now that everyting has calmed down things are actually not that bad.
+
+One would think that the goblins would smell, but Urok does actually smell quite good.
+
+[Janice sighs]
+
+Such muscular arms.]],
+    NPC = janiceNPC_ID,
+}
+
+NPCTopic{
+    Topic = "Tasks",
+    Slot = A,
+    CanShow = CanShowGoblinWon,
+    Text = "You have done the goblins a great service. I have however no further tasks for you at this time.",
+    NPC = nilbogNPC_ID,
+}
+
+Greeting{
+    NPC = nilbogNPC_ID,
+    CanShow = CanShowGoblinWonDialogsThatShouldWait,
+    Text = "Greetings friends of Goblins."
+}
+
+NPCTopic{
+    Slot = A,
+    NPC = urokNPC_ID,
+    CanShow = CanShowGoblinWonDialogsThatShouldWait,
+    Topic = "Humans",
+    Text = "Humans serve goblins, Urok is the mayor now!"
+}
+
+NPCTopic{
+    Topic = "Taxes",
+    Slot = B,
+    CanShow = CanShowGoblinWonDialogsThatShouldWait,
+    Text = "I wonder if Mayor Urok has some taxes for me.",
+    NPC = nilbogNPC_ID,
+}
+
+NPCTopic{
+    Topic = "Lord Nilbog",
+    Slot = B,
+    CanShow = CanShowGoblinWonDialogsThatShouldWait,
+    Text = "Lord Nilbog rules Goblinwatch, I rule the town!",
+    NPC = urokNPC_ID,
+}
+
+
+MoveGoblinsIntoNewSorpigal = function ()
+     -- change portraits and names on multiple of the expert trainers in-town
+    local ErikSalzburgId = 847-- expert body building
+    Game.NPC[ErikSalzburgId].Pic = 622
+    Game.NPC[ErikSalzburgId].Name = "Uglug"
+
+    local ErikSalzburgId = 857-- expert meditation
+    Game.NPC[ErikSalzburgId].Pic = 550
+    Game.NPC[ErikSalzburgId].Name = "Ugla"
+
+    local HaroldHessId = 818
+    Game.NPC[HaroldHessId].Pic = 623
+    Game.NPC[HaroldHessId].Name = "Argag"
+
+    local HejazMawsilId = 1073
+    Game.NPC[HejazMawsilId].Pic = 552
+    Game.NPC[HejazMawsilId].Name = "Ula"
+
+    local IsaoMagistrusId = 866
+    Game.NPC[IsaoMagistrusId].Pic = 626
+    Game.NPC[IsaoMagistrusId].Name = "Grol"
+
+    Game.NPC[urokNPC_ID].House = Game.NPC[frankFairchild_ID].House
+    Game.NPC[urokNPC_ID].Name = "Mayor Urok"
+end
+
+NPCTopic{
+    Topic = "Goblins in New Sorpigal",
+    Slot = E,
+    CanShow = function() return vars.Quests[Quest_Goblinwatch5] == "Done" end,
+    NPC = willburHumphrey_ID,
+    Text = [[
+Have you heard? The goblins have taken New Sorpigal. 
+
+We are supposed to be the defenders of this land, and yet we let a bunch of goblins take over one of our towns!
+
+What an embarrassment! 
+
+Unfortunately we already have too much trouble on our hands to deal with them at this time.]],
+}
+
+--------------------------------------------------------------------------------
+--                              Goblins lost                                  --
+--------------------------------------------------------------------------------
+Quest{        
+    questAlternativeEnding,
+    Slot = E,
+    NPC = frankFairchild_ID,
+    CanShow = function() return Map.Name == NewSorpigal and vars.LordNilbogDead end,
+    CheckDone = function() return vars.LordNilbogDead end,
+    Gold = 10000,
+    Exp = 10000
+}.SetTexts{
+    Quest = "Lord Nilbog is dead",
+    FirstTopic = "Lord Nilbog's demise",
+    Give = "Really? You killed Lord Nilbog? I can't believe it!",
+    TopicGiven = "Reward killing Lord Nilbog",
+    Done = [[
+Thank you for killing Lord Nilbog and saving our town!
+
+Please accept this gold as a token of our gratitude
+
+I herby grant you the title...
+
+Savior of New Sorpigal!]],
+    Award = "Granted the title Savior of New Sorpigal",
+}
+
+NPCTopic{
+    Topic = "Goblins in New Sorpigal",
+    Slot = E,
+    CanShow = function() return vars.Quests[Quest_Goblinwatch5_AlternativeEnding] == "Done" end,
+    NPC = willburHumphrey_ID,
+    Text = [[
+Have you heard? There was a goblin attack on the town New Sorpigal. 
+
+We are supposed to be the defenders of this land. 
+
+Luckily a group of adventurers stepped in and saved us the embarrasment.
+]],
+}
+
+
+GiveFrankSurrenderQuest = function()
+    local QuestBase = {}
+    local function MyQuest(t)
+        table.copy(QuestBase, t)  -- copy common values
+        QuestBase.Slot = QuestBase.Slot and QuestBase.Slot + 1  -- auto-increment Slot
+        return Quest(t)
+    end
+
+    local function SetQuestBranch(t)
+        QuestBranch(t.NewBranch)
+    end
+
+    QuestNPC = frankFairchild_ID
+    QuestBase = {Branch = "", Slot = E, Ungive = SetQuestBranch}
+    MyQuest{
+        CanShow = function () return Map.Name == NewSorpigal and vars.Quests[Quest_Goblinwatch5] == "Given" and (vars.FrankFairchildHasSurrendered ~= true and vars.AcceptKillLordNilbog ~= true) end,
+        NewBranch = "AskFrankFairchildToSurrender",
+        Texts = {
+            Topic = "Surrender to Lord Nilbog",
+            Ungive = [[
+[Frank looks at you pleadingly]
+
+Lord Nilbog must be stopped.
+
+You are the only one that can help us!]]
+        }
+    }
+
+    QuestBase = {Branch = "AskFrankFairchildToSurrender", Slot = E, Ungive = SetQuestBranch}
+    MyQuest{
+        NewBranch = "AgreeToHelpFrank",
+        CanShow = function(t) 
+            return Map.Name == NewSorpigal and vars.FrankFairchildHasSurrendered ~= true
+        end,
+        Ungive = function(t) 
+            vars.AcceptKillLordNilbog = true
+            CreateKillLordNilbogQuestBranch()
+            QuestBranch('') 
+        end,
+        
+        Texts = {
+            Topic = "Kill Lord Nilbog!",
+            Ungive = [[
+Thank you so much!
+
+Hurry and stop the Goblins!]],
+        }
+    }
+
+    MyQuest{
+        NewBranch = "ForceFrankToSurrender",
+        CanShow = function(t) 
+            return Map.Name == NewSorpigal and vars.AcceptKillLordNilbog ~= true 
+        end,
+        Ungive = function(t) 
+            vars.FrankFairchildHasSurrendered = true
+            QuestBranch('')  
+        end,
+        Texts = {
+            Topic = "Surrender!",
+            Ungive = [[
+[Frank looks down in defeat]
+
+I guess I have no choice.
+
+Please hurry up and tell Lord Nilbog that I surrender.]],
+        }
+    }
+
+    NPCTopic{
+        Topic = "Surrender",
+        Slot = E,
+        Text = "Please hurry up and tell Lord Nilbog that I surrender.",
+        NPC = frankFairchild_ID,
+        CanShow = function() return Map.Name == NewSorpigal and vars.Quests[Quest_Goblinwatch5] == "Given" and vars.FrankFairchildHasSurrendered end,
+    }
+
+    NPCTopic{
+        Topic = "Kill Lord Nilbog",
+        Slot = E,
+        Text = "Hurry up and slay that fell beast.",
+        NPC = frankFairchild_ID,
+        CanShow = function() return Map.Name == NewSorpigal and vars.Quests[Quest_Goblinwatch5] == "Given" and vars.AcceptKillLordNilbog end,
+    }
+end
+
+CreateKillLordNilbogQuestBranch = function()
+    local QuestBase = {}
+    local function MyQuest(t)
+        table.copy(QuestBase, t)  -- copy common values
+        QuestBase.Slot = QuestBase.Slot and QuestBase.Slot + 1  -- auto-increment Slot
+        return Quest(t)
+    end
+
+    local function SetQuestBranch(t)
+        QuestBranch(t.NewBranch)
+    end
+
+    QuestNPC = nilbogNPC_ID
+    QuestBase = {Branch = "", Slot = E, Ungive = SetQuestBranch}
+    MyQuest{
+        CanShow = function () return vars.AcceptKillLordNilbog == true end,
+        NewBranch = "KillLordNilbog",
+        Texts = {
+            Topic = "Kill Lord Nilbog",
+            Ungive = [[
+[Lord Nilbog cackles]
+
+The mayor wants me dead huh? Go back to him an finish the job!]]
+        }
+    }
+
+    QuestBase = {Branch = "KillLordNilbog", Slot = E, Ungive = SetQuestBranch}
+    MyQuest{
+        NewBranch = "KillLordNilbog",
+        Ungive = function(t) 
+            vars.AcceptKillLordNilbog = false 
+            QuestBranch('')  
+        end,
+        Texts = {
+            Topic = "Of course!",
+            Ungive = "The humans will bow to goblins!"
+        }
+    }
+
+    MyQuest{
+        NewBranch = "KillLordNilbogYes",
+        Ungive = function(t)
+           Sleep(2500, 1)
+            EnterDecentHouseMap(Quest_Goblinwatch5)
+        end,
+        Texts = {
+            Topic = "No your tyranny has ended Nilbog!",
+            Ungive = [[
+[Lord Nilbog shrieks]
+
+Side with humans die with humans!]]
+        }
+    }
+end
+
+local function SendPartyBackToGoblinwatchApartmentEntrance()
+    evt.PlaySound(7) -- slam door sound
+    evt.MoveToMap{Name=NewSorpigal, X=-18303, Y=-15535, Z=1985, Direction=1538}
+end
+
+
+function events.AfterLoadMap() 
+    if (Map.Name == decenthouseMapName and vars.decentHousePurpose == Quest_Goblinwatch5) then
+        local monsterLordNilbog = CreateMonsterLordNilbog() 
+        evt.Map[decenthouseExitDoorEventId] = function() 
+            if monsterLordNilbog.HP > 0 then
+                Game.ShowStatusText(Game.MonstersTxt[monsterLordNilbog.Id].Name  .. " is blocking your escape!")
+            else 
+                SendPartyBackToGoblinwatchApartmentEntrance()
+            end
+        end
+    end
+end
+
+function events.MonsterKilled(mon) 
+    if Map.Name == decenthouseMapName and Game.MonstersTxt[mon.Id].Name == "Lord Nilbog" then
+        vars.LordNilbogDead = true;
+        vars.NewSorpigalGoblinsFriendly = false;
+        -- TODO further test is this have unwanted side effects
+        vars.Quests[Quest_Goblinwatch5] = nil
+    end
+end
+
+function Quest_Goblinwatch5_GiveUrukTraitorAwardQuest()
+    RemoveAllTopicsFromNPC(urokNPC_ID)
+
+    Quest{
+    questAlternativeEndingUrukTraitorAward,
+    Slot = E,
+    NPC = urokNPC_ID,
+    CanShow = function() return Map.Name == NewSorpigal and vars.LordNilbogDead end,
+    CheckDone = function() return vars.LordNilbogDead end,
+    Done = function()
+        local goblinKing = 552
+        SummonMonster(goblinKing, -2891, -19562, 0, true)
+        SummonMonster(goblinKing, -3059, -19698, 0, true)
+        SummonMonster(goblinKing, -3159, -19898, 0, true)
+        SummonMonster(goblinKing, -3273, -20352, 0, true)
+    end
+    
+}.SetTexts{
+    Quest = "Traitor!",
+    FirstTopic = "Traitor!",
+    Give = [[
+You betrayed us!]],
+    TopicGiven = "Revenge!",
+    Undone = "The other goblins will know of this!",
+    Done = [[
+You are no friend of goblins!
+
+The other goblins will know of this!]],
+    Award = "Betrayed the Goblins of New Sorpigal"
+}
+end
+
+
+MakeGoblinsHostile = function()
+    -- Make goblins hostile
+    local goblinId = 550
+    local goblinMon = (goblinId + 2):div(3)
+    Game.HostileTxt[goblinMon][0] = 4
+end
+
+MakeGoblinsHostileToPeasants = function()
+    local goblinMonId = 550
+    local goblinMon = (goblinMonId + 2):div(3)
+    local peasantMon = (595 + 2):div(3)
+    Game.HostileTxt[goblinMon][peasantMon] = 4
+end
+
+MakeGoblinsFriendlyToPeasant = function()
+    vars.NewSorpigalGoblinsFriendly = true
+    local goblinId = 550
+    local goblinMon = (goblinId + 2):div(3)
+    local peasantMon = (595 + 2):div(3)
+    Game.HostileTxt[goblinMon][peasantMon] = 0
+end
+
+-- Made public for MAW workaround
+function Quest_Goblinwatch5_MonsterLordNilbog(monsterLordNilbog)
+    local LordNilbogMonsterTxtId = 550
+    local ogreChieftain = Game.MonstersTxt[594] 
+
+    if monsterLordNilbog.AIState ~= const.AIState.Dead then
+        monsterLordNilbog.HP = ogreChieftain.FullHP
+    end
+    monsterLordNilbog.FullHP = ogreChieftain.FullHP
+    monsterLordNilbog.Exp = ogreChieftain.Exp
+    monsterLordNilbog.Attack1.DamageAdd = ogreChieftain.Attack1.DamageAdd
+    monsterLordNilbog.Attack1.DamageDiceSides = ogreChieftain.Attack1.DamageDiceSides
+    monsterLordNilbog.Attack1.DamageDiceCount = ogreChieftain.Attack1.DamageDiceCount
+
+    -- Changing these doesn't matter because it will reset after map leave
+    Game.MonstersTxt[LordNilbogMonsterTxtId].Name = "Lord Nilbog"
+
+    MakeGoblinsHostile()
+    return monsterLordNilbog
+end
+
+CreateMonsterLordNilbog = function()
+    local LordNilbogMonsterTxtId = 550  -- Normal MM6 Goblin
+    local monsterLordNilbog
+    for _, m in Map.Monsters do
+        -- TODO missing robustness: for this loop to work no other monsters sharing Lord Nilbogs index need to exist  
+        if m.Id == LordNilbogMonsterTxtId then
+            monsterLordNilbog = m
+        end
+    end
+    if monsterLordNilbog == nil then
+        monsterLordNilbog = SummonMonster(LordNilbogMonsterTxtId, -115, 55, 1, true)
+    end
+    return Quest_Goblinwatch5_MonsterLordNilbog(monsterLordNilbog)
+end
+
+function events.MonsterSpriteScale(t)
+    local LordNilbogMonsterTxtId = 550
+    if t.Monster.Id == LordNilbogMonsterTxtId and Game.MonstersTxt[LordNilbogMonsterTxtId].Name == "Lord Nilbog" then
+        t.Scale = 53248 -- 1.25 scale, but hardcoded to prevent bugs with other mods
+    end  
+end

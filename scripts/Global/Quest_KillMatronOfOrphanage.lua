@@ -321,13 +321,13 @@ end
 SetupNPCs = function()
     if vars.MatronOfOrphanageKilled ~= true then
         Game.NPC[matronNPC_ID].House = HouseID
-        Game.NPC[matronNPC_ID].Pic = 40
+        Game.NPC[matronNPC_ID].Pic = 40 -- bytt til 194? 260 perfekt?
         Game.NPC[matronNPC_ID].Name = "Hilda Briarwood"
     end
 
     if vars.orphanChildrenHasStarved then
         Game.NPC[matronNPC_ID].House = HouseID
-        Game.NPC[matronNPC_ID].Pic = 35 -- seer pic
+        Game.NPC[matronNPC_ID].Pic = 35 -- seer pic -- 1026 skeleton
         Game.NPC[matronNPC_ID].Name = ""
         Game.NPC[child1NPC_ID].House = 0
         Game.NPC[child2NPC_ID].House = 0
@@ -338,7 +338,7 @@ SetupNPCs = function()
         Game.NPC[child2NPC_ID].Name = "Steve"
         Game.NPC[child2NPC_ID].Profession = 0
         Game.NPC[child2NPC_ID].Pic = 63
-        Game.NPC[child1NPC_ID].Pic = 31
+        Game.NPC[child1NPC_ID].Pic = 31 -- bytt til 215?
     end
     if vars.OrphanGhostsKilled ~= nil then
         Game.NPC[matronNPC_ID].House = 0

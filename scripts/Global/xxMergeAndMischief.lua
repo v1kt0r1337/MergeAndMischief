@@ -31,6 +31,9 @@ TODO:
 
     Urok and Samson Tess are both completely safe in the context of Goblinwatch quest, but should not be used elsewhere.
 
+
+    blodig fjes 295
+
 ]] --   
 local decenthouseMapName = "decenthouse.blv"
 

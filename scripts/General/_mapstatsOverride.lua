@@ -6,7 +6,7 @@ function events.BeforeLoadMap()
         end
     end
 end
-function events.LeaveMap() 
+function events.LeaveMap()
     if Map.Name == "decenthouse.blv" then
         vars.decentHousePurpose = nil
         -- removes all monsters in the map for later reuse
