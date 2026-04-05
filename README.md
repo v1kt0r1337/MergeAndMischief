@@ -36,3 +36,8 @@ In no particular order:
 - New World Computing
 
 And the many other mod developers of Might and Magic that has adviced me during my modding journey
+
+## Development
+
+For easier development edit SRC and DST as stated in [deploy.sh](deploy.sh)
+Then write use the `watch.sn` bash script to automatically sync changes from code project to game files.

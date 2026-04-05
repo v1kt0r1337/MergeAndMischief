@@ -1,6 +1,4 @@
 --[[
-
-
 TODO: 
 
     Should: Add goblin npcs to replace npcs killed in the questline.
