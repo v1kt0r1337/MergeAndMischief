@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+trap 'echo "Stopping watcher."; exit 0' INT TERM
 
 echo "Initial deploy..."
 ./deploy.sh
@@ -8,5 +8,5 @@ echo "Initial deploy..."
 echo "Watching for changes..."
 
 while true; do
-  find Scripts -name "*.lua" | entr -rd ./deploy.sh
+  find Scripts -name "*.lua" | entr -rd ./deploy.sh || true
 done
