@@ -1,38 +1,4 @@
---[[
-TODO: 
-
-    Should: Add goblin npcs to replace npcs killed in the questline.
-
-    could add a recruitable player for each faction at the end.
-
-    Ideally (not feasible): change decenthouse.blv to a proper room deserving of Goblinwatch
-
-    could: Tune the goblin attack on New Sorpigal.
-
-    could: Make Nilbog, Farmer Todd or Samson Tess drop something more interesting?
-
-    -- ReloadHouse(id) can be used to reload a house if needed
-
-    Suggestion inspired by Kromzinger: add new topic to Lord Nilbog
-    "Lord Nilbog"
-    "I have many names. Here I am known as Lord Nilbog, but some know me as Grognard or Grognard the Sixth
-
-    BUT is Grognard in mm7 referred to as Grognard the Seventh or Grognard? According to sources he is referred to as Grognard, will be too confusing.
-
-
-        Safe NPC List: [
-        111 (Harry Merit, 100% safe),
-        836 (Hector Dragged, 100% safe)
-        850 (Saad Shamel, 100% safe)
-        id: 399 -> 405 looks completely safe, but check them out
-    ]
-
-    Urok and Samson Tess are both completely safe in the context of Goblinwatch quest, but should not be used elsewhere.
-
-
-    blodig fjes 295
-
-]] --   
+-- This file is for late overrides and global events that must apply after the other global scripts have loaded.
 local decenthouseMapName = "decenthouse.blv"
 
 function events.CanCastTownPortal(t)
