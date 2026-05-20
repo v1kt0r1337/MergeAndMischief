@@ -16,4 +16,3 @@ function events.LeaveMap()
         Map.LastRefillDay = 0
     end
 end
-

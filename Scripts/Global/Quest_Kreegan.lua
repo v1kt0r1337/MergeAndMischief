@@ -77,7 +77,8 @@ local enemyMessengerNPC_ID = 836
 local ambushContactNPC_ID = 836
 
 -- Monster IDs
-local enemyMessengerMonsterID = 637
+local enemyMessengerMonsterID = 637 -- thief
+local enemyMessengerPowerMonsterID = 581 -- minotaur mage
 local khorTarrMonsterID = 501
 
 local ambushCaptainMonsterID = 555
@@ -906,7 +907,7 @@ MakeEnemyMessengerFriendly = function()
     Game.HostileTxt[enemyMessengerMon][0] = 0
 end
 
-CreateEnemyMessenger = function(mon)
+CreateEnemyMessenger = function(mon, resetPowerHP)
     if mon == nil then
         mon = FindEnemyMessenger()
     end
@@ -916,6 +917,7 @@ CreateEnemyMessenger = function(mon)
     end
 
     MakeEnemyMessengerFriendly()
+    ApplyMonsterPowerFromMonster(mon, Game.MonstersTxt[enemyMessengerPowerMonsterID], resetPowerHP == true)
     mon.AIType = 3
     mon.NPC_ID = enemyMessengerNPC_ID
 
@@ -932,7 +934,7 @@ SummonEnemyMessenger = function()
     if mon == nil then
         local messengerIndex
         mon, messengerIndex = SummonMonster(enemyMessengerMonsterID, -296, 17180, 192, true)
-        CreateEnemyMessenger(mon)
+        CreateEnemyMessenger(mon, true)
         CreateAndSetMonsterEncounterFromIndexes(KreeganMessengerEncounterName, {messengerIndex}, blackshire)
         return
     end
