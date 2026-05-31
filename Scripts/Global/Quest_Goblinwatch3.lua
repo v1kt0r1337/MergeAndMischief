@@ -16,6 +16,7 @@ local NewSorpigal = "oute3.odm"
 -- Quest IDs
 local Quest_Goblinwatch3 = "Quest_Goblinwatch3"
 local Quest_Goblinwatch2 = "Quest_Goblinwatch2"
+local FarmerToddEncounterName = "Quest_Goblinwatch3_FarmerTodd"
 
 -- Hoisted forward declarations
 local Quest_Goblinwatch3_CreateTodd
@@ -40,8 +41,9 @@ Quest{
     Quest_Goblinwatch3,
     NPC = urokNPC_ID,
     Give = function()
-        local mon = SummonMonster(FarmerToddMonsterTxtId, -1076, -5762, 856, true)
-        Quest_Goblinwatch3_CreateTodd(mon)
+        local mon, monIndex = SummonMonster(FarmerToddMonsterTxtId, -1076, -5762, 856, true)
+        CreateAndSetMonsterEncounterFromIndexes(FarmerToddEncounterName, {monIndex}, NewSorpigal)
+        Quest_Goblinwatch3_CreateTodd(mon, true)
     end,
     CheckDone = function()
         return vars.FarmerToddDead == true
@@ -55,6 +57,7 @@ Quest{
     Slot = E,
     Done = function()
         vars.FarmerToddDead = nil
+        MarkMonsterEncounterForRemoval(FarmerToddEncounterName, NewSorpigal)
     end
 }.SetTexts {
     Quest = "Kill Farmer Todd",
@@ -169,7 +172,7 @@ function events.AfterLoadMap(WasInGame)
 end
 
 function events.MonsterKilled(mon)
-    if InNewSorpigal() and Game.MonstersTxt[mon.Id].Name == "Farmer Todd" then
+    if InNewSorpigal() and MonsterEncounterContainsMonster(GetMonsterEncounter(FarmerToddEncounterName, NewSorpigal), mon) == true then
         vars.FarmerToddDead = true
         MakeNilbogToLordNPC()
     end
@@ -185,15 +188,27 @@ MakeNilbogToLordNPC = function()
     Game.NPC[nilbogNPC_ID].Name = "Lord Nilbog"
 end
 
-function Quest_Goblinwatch3_CreateTodd(mon)
+function Quest_Goblinwatch3_CreateTodd(mon, resetPowerHP)
+    if mon == nil then
+        ForEachMonsterEncounter(GetMonsterEncounter(FarmerToddEncounterName, NewSorpigal), function(_, encounterMon)
+            mon = encounterMon
+        end)
+    end
+
     if mon == nil then
         for _, m in Map.Monsters do
-            -- TODO: assumes no duplicate monsters with Farmer Todd id
-            if m.Id == FarmerToddMonsterTxtId then
+            if m.Id == FarmerToddMonsterTxtId and m.NPC_ID == FarmerToddNPC_ID then
                 mon = m
                 break
             end
         end
+        if mon ~= nil and GetMonsterEncounter(FarmerToddEncounterName, NewSorpigal) == nil then
+            CreateAndSetMonsterEncounterFromIndexes(FarmerToddEncounterName, {mon:GetIndex()}, NewSorpigal)
+        end
+    end
+
+    if mon == nil then
+        return
     end
 
     if mon.AIState == const.AIState.Removed then
@@ -205,13 +220,8 @@ function Quest_Goblinwatch3_CreateTodd(mon)
 
     mon.AIType = 3
     if mon.AIState ~= const.AIState.Dead then
-        mon.HP = masterSwordsman.FullHP
+        ApplyMonsterPowerFromMonster(mon, masterSwordsman, resetPowerHP ~= false)
     end
-    mon.FullHP = masterSwordsman.FullHP
-    mon.Exp = masterSwordsman.Exp
-    mon.Attack1.DamageAdd = masterSwordsman.Attack1.DamageAdd
-    mon.Attack1.DamageDiceSides = masterSwordsman.Attack1.DamageDiceSides
-    mon.Attack1.DamageDiceCount = masterSwordsman.Attack1.DamageDiceCount
 
     -- overwrite NPC identity
     local monTxt = Game.MonstersTxt[FarmerToddMonsterTxtId]

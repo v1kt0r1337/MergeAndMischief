@@ -2,6 +2,7 @@ local A, B, C, D, E, F = 0, 1, 2, 3, 4, 5
 local NewSorpigal = "oute3.odm"
 local Quest_Goblinwatch4 = "Quest_Goblinwatch4"
 local Quest_Goblinwatch3 = "Quest_Goblinwatch3"
+local GuardReinforcementsEncounterName = "Quest_Goblinwatch4_GuardReinforcements"
 local goblinwatchHouse = 1463
 local urokNPC_ID = 1081
 local nilbogNPC_ID = 111
@@ -38,6 +39,13 @@ Quest{
         return Map.Name == NewSorpigal and vars.Quests[Quest_Goblinwatch3] == "Done"
     end,
     CheckDone = function()
+        local reinforcementsEncounter = GetMonsterEncounter(GuardReinforcementsEncounterName, NewSorpigal)
+        if vars.AllGuardsInNSDead == true and reinforcementsEncounter ~= nil then
+            if MonsterEncounterHasAnyActive(reinforcementsEncounter) == true then
+                return false
+            end
+        end
+
         local allGuardsDead = true
         for _, m in Map.Monsters do
             if (m.Id == guardId or m.Id == captainId) and
@@ -49,6 +57,7 @@ Quest{
     end,
     Done = function()
         MakeGoblinsFriendly()
+        MarkMonsterEncounterForRemoval(GuardReinforcementsEncounterName, NewSorpigal)
     end,
     Gold = 2000,
     Exp = 2000
@@ -91,10 +100,14 @@ function events.MonsterKilled(mon, monIndex)
         if guardsLeft == 0 then
             Message("All the town guards are dead.")
             vars.AllGuardsInNSDead = true
+            local reinforcementIndexes = {}
             for i = 1, 4 do
-                local m = SummonMonster(553, -19012, -15459, 1985, true)
+                local _, guardIndex = SummonMonster(553, -19012, -15459, 1985, true)
+                table.insert(reinforcementIndexes, guardIndex)
             end
-            local m = SummonMonster(555, -19012, -15459, 1985, true)
+            local _, captainIndex = SummonMonster(555, -19012, -15459, 1985, true)
+            table.insert(reinforcementIndexes, captainIndex)
+            CreateAndSetMonsterEncounterFromIndexes(GuardReinforcementsEncounterName, reinforcementIndexes, NewSorpigal)
         end
     end
 end

@@ -15,6 +15,9 @@ local Quest_Goblinwatch5 = "Quest_Goblinwatch5"
 local Quest_Goblinwatch4 = "Quest_Goblinwatch4"
 local questAlternativeEnding = "Quest_Goblinwatch5_AlternativeEnding"
 local questAlternativeEndingUrukTraitorAward = "Quest_Goblinwatch5_AlternativeUrukTraitorAward"
+local GoblinAttackEncounterName = "Quest_Goblinwatch5_GoblinAttack"
+local GuardReplacementGoblinEncounterName = "Quest_Goblinwatch5_GuardReplacementGoblins"
+local TraitorRevengeEncounterName = "Quest_Goblinwatch5_TraitorRevenge"
 local willburHumphrey_ID = 789
 
 local decenthouseMapName = "decenthouse.blv"
@@ -56,6 +59,17 @@ local function CanShowGoblinWon()
 end
 local function CanShowGoblinWonNotWaiting()
     return CanShowGoblinWon() and svars.GoblinsWonWaitWithChanges == nil
+end
+local function AddIndexesToMonsterEncounter(encounterName, indexes)
+    if #indexes == 0 then
+        return
+    end
+
+    if GetMonsterEncounter(encounterName, NewSorpigal) ~= nil then
+        AddMonsterEncounterIndexes(encounterName, indexes, NewSorpigal)
+    else
+        CreateAndSetMonsterEncounterFromIndexes(encounterName, indexes, NewSorpigal)
+    end
 end
 
 -- Hostility helpers --------------------------------------------------------
@@ -105,16 +119,23 @@ QuestStage "Start" {
         Give = function()
             local goblinMonId = 550
             local goblinShamanMonId = 551
+            local goblinAttackIndexes = {}
 
-            SummonMonster(goblinMonId, -13117, -8893, 161, true)
-            SummonMonster(goblinMonId, -10252, -9420, 161, true)
-            SummonMonster(goblinMonId, -9350, -9035, 161, true)
-            SummonMonster(goblinMonId, -9789, -8824, 161, true)
-            SummonMonster(goblinShamanMonId, -9672, -8431, 161, true)
-            SummonMonster(goblinMonId, -9376, -7920, 161, true)
-            SummonMonster(goblinMonId, -5884, -7917, 161, true)
-            SummonMonster(goblinMonId, -5947, -7622, 161, true)
-            SummonMonster(goblinMonId, -6470, -5788, 161, true)
+            local function SummonGoblinAttackMonster(monId, x, y, z)
+                local _, monIndex = SummonMonster(monId, x, y, z, true)
+                table.insert(goblinAttackIndexes, monIndex)
+            end
+
+            SummonGoblinAttackMonster(goblinMonId, -13117, -8893, 161)
+            SummonGoblinAttackMonster(goblinMonId, -10252, -9420, 161)
+            SummonGoblinAttackMonster(goblinMonId, -9350, -9035, 161)
+            SummonGoblinAttackMonster(goblinMonId, -9789, -8824, 161)
+            SummonGoblinAttackMonster(goblinShamanMonId, -9672, -8431, 161)
+            SummonGoblinAttackMonster(goblinMonId, -9376, -7920, 161)
+            SummonGoblinAttackMonster(goblinMonId, -5884, -7917, 161)
+            SummonGoblinAttackMonster(goblinMonId, -5947, -7622, 161)
+            SummonGoblinAttackMonster(goblinMonId, -6470, -5788, 161)
+            AddIndexesToMonsterEncounter(GoblinAttackEncounterName, goblinAttackIndexes)
 
             MakeGoblinsHostileToPeasants()
             PlayFightSounds()
@@ -531,13 +552,16 @@ function events.AfterLoadMap()
 
     if Q5Done() then
         local guardId, goblinMonId = 553, 550
+        local replacementGoblinIndexes = {}
         for _, m in Map.Monsters do
             -- If the map refilled guards, convert them to goblins
             if m.Id == guardId and (m.AIState ~= const.AIState.Dead) then
-                SummonMonster(goblinMonId, m.X, m.Y, m.Z, true)
+                local _, goblinIndex = SummonMonster(goblinMonId, m.X, m.Y, m.Z, true)
+                table.insert(replacementGoblinIndexes, goblinIndex)
                 m.AIState = const.AIState.Removed
             end
         end
+        AddIndexesToMonsterEncounter(GuardReplacementGoblinEncounterName, replacementGoblinIndexes)
     end
 end
 
@@ -589,10 +613,16 @@ GiveUrukTraitorAwardQuest = function()
         end,
         Done = function()
             local goblinKing = 552
-            SummonMonster(goblinKing, -2891, -19562, 0, true)
-            SummonMonster(goblinKing, -3059, -19698, 0, true)
-            SummonMonster(goblinKing, -3159, -19898, 0, true)
-            SummonMonster(goblinKing, -3273, -20352, 0, true)
+            local revengeIndexes = {}
+            local _, firstGoblinIndex = SummonMonster(goblinKing, -2891, -19562, 0, true)
+            table.insert(revengeIndexes, firstGoblinIndex)
+            local _, secondGoblinIndex = SummonMonster(goblinKing, -3059, -19698, 0, true)
+            table.insert(revengeIndexes, secondGoblinIndex)
+            local _, thirdGoblinIndex = SummonMonster(goblinKing, -3159, -19898, 0, true)
+            table.insert(revengeIndexes, thirdGoblinIndex)
+            local _, fourthGoblinIndex = SummonMonster(goblinKing, -3273, -20352, 0, true)
+            table.insert(revengeIndexes, fourthGoblinIndex)
+            AddIndexesToMonsterEncounter(TraitorRevengeEncounterName, revengeIndexes)
         end
     }.SetTexts {
         Quest = "Traitor!",
@@ -614,19 +644,13 @@ end
 -- ============================================================================
 
 -- Public for MAW workaround
-function Quest_Goblinwatch5_MonsterLordNilbog(monsterLordNilbog)
+function Quest_Goblinwatch5_MonsterLordNilbog(monsterLordNilbog, resetPowerHP)
     local LordNilbogMonsterTxtId = 550
     local ogreChieftain = Game.MonstersTxt[594]
 
     if monsterLordNilbog.AIState ~= const.AIState.Dead then
-        monsterLordNilbog.HP = ogreChieftain.FullHP
+        ApplyMonsterPowerFromMonster(monsterLordNilbog, ogreChieftain, resetPowerHP ~= false)
     end
-    monsterLordNilbog.FullHP = ogreChieftain.FullHP
-    monsterLordNilbog.Exp = ogreChieftain.Exp
-
-    monsterLordNilbog.Attack1.DamageAdd = ogreChieftain.Attack1.DamageAdd
-    monsterLordNilbog.Attack1.DamageDiceSides = ogreChieftain.Attack1.DamageDiceSides
-    monsterLordNilbog.Attack1.DamageDiceCount = ogreChieftain.Attack1.DamageDiceCount
 
     -- Cosmetic (resets on map leave)
     Game.MonstersTxt[LordNilbogMonsterTxtId].Name = "Lord Nilbog"
@@ -638,6 +662,7 @@ end
 CreateMonsterLordNilbog = function()
     local LordNilbogMonsterTxtId = 550 -- normal MM6 Goblin index
     local monsterLordNilbog
+    local resetPowerHP = false
     for _, m in Map.Monsters do
         -- NOTE: assumes no other monsters share Lord Nilbog's index
         if m.Id == LordNilbogMonsterTxtId then
@@ -646,6 +671,7 @@ CreateMonsterLordNilbog = function()
     end
     if monsterLordNilbog == nil then
         monsterLordNilbog = SummonMonster(LordNilbogMonsterTxtId, -115, 55, 1, true)
+        resetPowerHP = true
     end
-    return Quest_Goblinwatch5_MonsterLordNilbog(monsterLordNilbog)
+    return Quest_Goblinwatch5_MonsterLordNilbog(monsterLordNilbog, resetPowerHP)
 end
