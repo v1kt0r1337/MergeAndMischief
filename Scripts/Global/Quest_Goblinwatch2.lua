@@ -25,6 +25,13 @@ local Quest_Goblinwatch2 = "Quest_Goblinwatch2"
 local CreateSamsonTessQuestBranch
 local SendPartyBackToGoblinwatchApartmentEntrance
 
+RegisterSharedHouseUse {
+    Key = "GoblinwatchNewSorpigalHouse",
+    QuestLine = "Goblinwatch",
+    Map = "oute3.odm",
+    House = 1463
+}
+
 -- Helpers --------------------------------------------------------------------
 local function InMap(map)
     return Map.Name == map
@@ -259,6 +266,21 @@ local function UrokShouldMove()
     return vars.Quests[Quest_Goblinwatch2] ~= "Done" and IsOriginalGoblinwathDone()
 end
 
+function RestoreGoblinwatchNativeHouseOccupants()
+    if vars.Quests[Quest_Goblinwatch2] ~= nil or vars.SamsonTessDead == true then
+        return
+    end
+
+    if not IsOriginalGoblinwathDone() then
+        Game.NPC[urokNPC_ID].House = goblinwatchHouse
+        Game.NPC[samsonTessNPC_ID].House = 0
+        return
+    end
+
+    Game.NPC[urokNPC_ID].House = houseBehindGoblinwatch
+    Game.NPC[samsonTessNPC_ID].House = goblinwatchHouse
+end
+
 -- ============================================================================
 --  Map / NPC helpers
 -- ============================================================================
@@ -350,10 +372,9 @@ function events.AfterLoadMap()
             MoveUrokToHouseTimer()
         end
 
-        -- update Urok's house
-        if UrokShouldMove() then
-            Game.NPC[urokNPC_ID].House = houseBehindGoblinwatch
-        elseif QuestState(Quest_Goblinwatch2, "Done") then
+        RestoreGoblinwatchNativeHouseOccupants()
+
+        if QuestState(Quest_Goblinwatch2, "Done") then
             Game.NPC[urokNPC_ID].House = goblinwatchHouse
         end
 

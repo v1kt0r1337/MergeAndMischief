@@ -45,12 +45,36 @@ local freeHavenCorvinHouse = 1418
 local blackshire = "outb2.odm"
 local kriegspire = "outb1.odm"
 local freehaven = "outc2.odm"
+local KreeganQuestLine = "Kreegan"
 
 -- Quest IDs
 local Quest_Kreegan_KillMessenger = "Quest_Kreegan_KillMessenger"
 local Quest_Kreegan_KillArmy = "Quest_Kreegan_KillArmy"
 local Quest_Kreegan_Ambush = "Quest_Kreegan_Ambush"
 local Quest_Kreegan_HideKhorTarr = "Quest_Kreegan_HideKhorTarr"
+
+RegisterSharedHouseUse {
+    Key = "KreeganBlackshireHouse",
+    QuestLine = KreeganQuestLine,
+    Map = blackshire,
+    House = blackShireHouse
+}
+
+RegisterSharedHouseUse {
+    Key = "KreeganKhorTarrHideout",
+    QuestLine = KreeganQuestLine,
+    Quest = Quest_Kreegan_HideKhorTarr,
+    Map = kriegspire,
+    House = khorTarrHideoutHouse
+}
+
+RegisterSharedHouseUse {
+    Key = "KreeganFreeHavenCorvinHouse",
+    QuestLine = KreeganQuestLine,
+    Quest = Quest_Kreegan_Ambush,
+    Map = freehaven,
+    House = freeHavenCorvinHouse
+}
 
 -- Encounter IDs
 local KreeganMessengerEncounterName = "KreeganMessenger"
