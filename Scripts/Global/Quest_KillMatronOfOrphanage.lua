@@ -21,7 +21,6 @@ local MatronMonsterID = 598
 -- 368680 is 1 day in game time
 local ChildrenStarvationTime = 368680 * 1.5
 
-local CreateRevengeSkeletons
 local CreateRevengeGhosts
 local ChildrenStarveTimer
 -- pic 61 indian fem child
