@@ -12,7 +12,9 @@ do
 	local scaleHook = function(indoor)
 		return function(hookContext)
 			local t = {Scale = hookContext.eax, Frame = getSFTItem(hookContext.ebx)}
-			t.MonsterIndex, t.Monster = internal.GetMonster(indoor and hookContext.edi or (hookContext.edi - 0x9A))
+			local monsterIndex = internal.GetMonster(indoor and hookContext.edi or (hookContext.edi - 0x9A))
+			t.MonsterIndex = math.floor(monsterIndex)
+			t.Monster = Map.Monsters[t.MonsterIndex]
 			events.call("MonsterSpriteScale", t)
 			hookContext.eax = t.Scale
 		end

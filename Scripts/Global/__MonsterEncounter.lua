@@ -189,7 +189,28 @@ end
 function RemoveMonsterEncounter(encounter)
     ForEachMonsterEncounter(encounter, function(_, mon)
         mon.AIState = const.AIState.Removed
+        mon:UpdateGraphicState()
     end, true)
+end
+
+function RemoveNamedMonsterEncounter(encounterName, mapName)
+    mapName = mapName or Map.Name
+    if mapName ~= Map.Name then
+        return nil, "wrong_map"
+    end
+
+    local mapEncounters = FindMonsterEncountersForMap(mapName)
+    local encounter = mapEncounters and mapEncounters[encounterName] or nil
+    if encounter == nil then
+        return nil, "missing_encounter"
+    end
+
+    RemoveMonsterEncounter(encounter)
+    mapEncounters[encounterName] = nil
+    if next(mapEncounters) == nil then
+        vars.MonsterEncounters[mapName] = nil
+    end
+    return true
 end
 
 function SetMonsterEncounter(encounterName, encounter, mapName)
@@ -330,7 +351,7 @@ IsMonsterEncounterOnCurrentMap = function(encounter)
 end
 
 GetMonsterEncounterMonster = function(record)
-    if type(record.index) ~= "number" or record.index < 0 then
+    if type(record.index) ~= "number" or record.index < Map.Monsters.low or record.index > Map.Monsters.high then
         return nil
     end
     local mon = Map.Monsters[record.index]

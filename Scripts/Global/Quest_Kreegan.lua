@@ -1,37 +1,6 @@
 -- ============================================================================
 --  Kreegan Questline
 -- ============================================================================
--- Notes ----------------------------------------------------------------------
--- empty house in blackshire 1387
---[[
-
--- kreegan pics 971, 1020
- 971 fits best
-
-Names:
-if we allow h3
-
- - Cahl / Carl
-
-
-1. Kill messenger
-2. Kill "Kreegan" army "disguised" as humans Army (what is their actual purpose, perhaps cleansing Temple of Baa or taking Castle Kriegspire?)
-
-3. After that party is approached by a stranger, tells party Carter is a Kreegan that has tricked them.
-Gives Quest to lure Carter into ambush
-   - party can tell Carter the truth, Carter will then want to spring the ambush with party help
-   - party can lure Carter out.
-
-Regardless of choice party can still take the decision to either help Carter or ambusher when the ambush springs
-But to make it a bit cleaner a dialoge option will be the decision maker.
-
-
-
-else
-    Khor-Tarr / Carter
-    Baal-Zath / Balzar
-    A'karr-on / Aaron
-]] --
 
 -- Base data ------------------------------------------------------------------
 local A, B, C, D, E, F = 0, 1, 2, 3, 4, 5
@@ -109,15 +78,15 @@ local armySupportMage = 631 -- magician
 local armyOffensiveMage = 632 -- magician
 
 -- Monster IDs
-local enemyMessengerMonsterID = 637 -- thief
-local khorTarrMonsterID = 501
-local devilSpawnMonsterID = 502
-local devilWorkerMonsterID = 503
-local devilWarriorMonsterID = 504
+local enemyMessengerMonsterId = 637 -- thief
+local khorTarrMonsterId = 501
+local devilSpawnMonsterId = 502
+local devilWorkerMonsterId = 503
+local devilWarriorMonsterId = 504
 
-local ambushCaptainMonsterID = 555
-local ambushArcherMonsterID = 475
-local ambushMasterMonkMonsterID = 583
+local ambushCaptainMonsterId = 555
+local ambushArcherMonsterId = 475
+local ambushMasterMonkMonsterId = 583
 
 -- Ambush setup
 local khorTarrAmbushGroup = 60
@@ -136,7 +105,6 @@ local createAmbushContactNPC
 local summonHumanArmyInKriegspire
 local SetKreeganArmyMonsterHostile
 local ConfigureKreeganArmyFormationMonster
-local makeTroop
 local CreateEnemyMessenger
 local SummonEnemyMessenger
 local MakeEnemyMessengerFriendly
@@ -283,7 +251,7 @@ CreateKhorTarrMonster = function(mon, resetHP)
     local oldFullHP = mon.FullHP
     local oldHP = mon.HP
 
-    Game.MonstersTxt[khorTarrMonsterID].Name = Game.NPC[carterNPC_ID].Name
+    Game.MonstersTxt[khorTarrMonsterId].Name = Game.NPC[carterNPC_ID].Name
     mon.FullHP = math.max(1, math.floor(mon.FullHP * hpMultiplier))
     if resetHP then
         mon.HP = mon.FullHP
@@ -306,7 +274,7 @@ IsKhorTarrSideMonster = function(mon)
 end
 
 IsKhorTarrMonster = function(mon)
-    return mon.Id == khorTarrMonsterID and IsKhorTarrSideMonster(mon)
+    return mon.Id == khorTarrMonsterId and IsKhorTarrSideMonster(mon)
 end
 
 IsFriendlyKreeganAmbushMonster = function(mon)
@@ -325,14 +293,14 @@ end
 
 ApplyKreeganAmbushSetup = function(resetPowerHP)
     createAmbushContactNPC()
-    Game.MonstersTxt[khorTarrMonsterID].Name = Game.NPC[carterNPC_ID].Name
-    Game.MonstersTxt[ambushMasterMonkMonsterID].Name = Game.NPC[ambushContactNPC_ID].Name
+    Game.MonstersTxt[khorTarrMonsterId].Name = Game.NPC[carterNPC_ID].Name
+    Game.MonstersTxt[ambushMasterMonkMonsterId].Name = Game.NPC[ambushContactNPC_ID].Name
 
     local encounters = {
         {
             name = KreeganAmbushKhorTarrEncounterName,
             setup = function(mon)
-                if mon.Id == khorTarrMonsterID then
+                if mon.Id == khorTarrMonsterId then
                     CreateKhorTarrMonster(mon, resetPowerHP == true)
                 end
                 if resetPowerHP == true then
@@ -345,14 +313,14 @@ ApplyKreeganAmbushSetup = function(resetPowerHP)
         {
             name = KreeganAmbushHumanEncounterName,
             setup = function(mon)
-                if mon.Id == ambushMasterMonkMonsterID then
-                    local ambushPowerMonsterID = 585 -- Master monk
-                    local ambushContactPowerMonster = Game.MonstersTxt[ambushPowerMonsterID]
-                    Game.MonstersTxt[ambushMasterMonkMonsterID].Name = Game.NPC[ambushContactNPC_ID].Name
+                if mon.Id == ambushMasterMonkMonsterId then
+                    local ambushPowerMonsterId = 585 -- Master monk
+                    local ambushContactPowerMonster = Game.MonstersTxt[ambushPowerMonsterId]
+                    Game.MonstersTxt[ambushMasterMonkMonsterId].Name = Game.NPC[ambushContactNPC_ID].Name
                     ApplyMonsterPowerFromMonster(mon, ambushContactPowerMonster, resetPowerHP, 6)
-                elseif mon.Id == ambushArcherMonsterID then
+                elseif mon.Id == ambushArcherMonsterId then
                     ApplyVeteranArcher(mon)
-                elseif mon.Id == ambushCaptainMonsterID then
+                elseif mon.Id == ambushCaptainMonsterId then
                     local minotaurID = 580
                     local minotaurPowerMonster = Game.MonstersTxt[minotaurID]
                     ApplyMonsterPowerFromMonster(mon, minotaurPowerMonster, resetPowerHP)
@@ -377,7 +345,7 @@ end
 
 RemoveKreeganAmbushActorMonsters = function(removeKhorTarr, removeAmbushContact)
     for _, mon in Map.Monsters do
-        if (removeKhorTarr and IsKhorTarrSideMonster(mon)) or (removeAmbushContact and IsAmbushHumanMonster(mon) and mon.Id == ambushMasterMonkMonsterID) then
+        if (removeKhorTarr and IsKhorTarrSideMonster(mon)) or (removeAmbushContact and IsAmbushHumanMonster(mon) and mon.Id == ambushMasterMonkMonsterId) then
             mon.AIState = const.AIState.Removed
         end
     end
@@ -921,36 +889,36 @@ SummonKreeganAmbushEncounter = function(showDialog)
     local khorTarrMapMonIndexes = {}
     local humanMapMonIndexes = {}
 
-    local _, khorTarrIndex = SummonMonster(khorTarrMonsterID, Party.X + 150, Party.Y + 150, Party.Z, true)
+    local _, khorTarrIndex = SummonMonster(khorTarrMonsterId, Party.X + 150, Party.Y + 150, Party.Z, true)
     table.insert(khorTarrMapMonIndexes, khorTarrIndex)
     vars.KreeganAmbushKhorTarrSummoned = true
 
     local meleeFormation = {
-        {ambushCaptainMonsterID, ambushX + 0, ambushY - 40, ambushZ},
-        {ambushCaptainMonsterID, ambushX - 90, ambushY - 130, ambushZ},
-        {ambushCaptainMonsterID, ambushX + 90, ambushY - 130, ambushZ},
-        {ambushCaptainMonsterID, ambushX - 170, ambushY - 220, ambushZ},
-        {ambushCaptainMonsterID, ambushX - 60, ambushY - 250, ambushZ},
-        {ambushCaptainMonsterID, ambushX + 60, ambushY - 250, ambushZ},
-        {ambushCaptainMonsterID, ambushX + 170, ambushY - 220, ambushZ},
-        {ambushCaptainMonsterID, ambushX - 260, ambushY - 340, ambushZ},
-        {ambushCaptainMonsterID, ambushX - 170, ambushY - 390, ambushZ},
-        {ambushCaptainMonsterID, ambushX - 85, ambushY - 425, ambushZ},
-        {ambushCaptainMonsterID, ambushX + 0, ambushY - 445, ambushZ},
-        {ambushCaptainMonsterID, ambushX + 85, ambushY - 425, ambushZ},
-        {ambushCaptainMonsterID, ambushX + 170, ambushY - 390, ambushZ},
-        {ambushCaptainMonsterID, ambushX + 260, ambushY - 340, ambushZ},
+        {ambushCaptainMonsterId, ambushX + 0, ambushY - 40, ambushZ},
+        {ambushCaptainMonsterId, ambushX - 90, ambushY - 130, ambushZ},
+        {ambushCaptainMonsterId, ambushX + 90, ambushY - 130, ambushZ},
+        {ambushCaptainMonsterId, ambushX - 170, ambushY - 220, ambushZ},
+        {ambushCaptainMonsterId, ambushX - 60, ambushY - 250, ambushZ},
+        {ambushCaptainMonsterId, ambushX + 60, ambushY - 250, ambushZ},
+        {ambushCaptainMonsterId, ambushX + 170, ambushY - 220, ambushZ},
+        {ambushCaptainMonsterId, ambushX - 260, ambushY - 340, ambushZ},
+        {ambushCaptainMonsterId, ambushX - 170, ambushY - 390, ambushZ},
+        {ambushCaptainMonsterId, ambushX - 85, ambushY - 425, ambushZ},
+        {ambushCaptainMonsterId, ambushX + 0, ambushY - 445, ambushZ},
+        {ambushCaptainMonsterId, ambushX + 85, ambushY - 425, ambushZ},
+        {ambushCaptainMonsterId, ambushX + 170, ambushY - 390, ambushZ},
+        {ambushCaptainMonsterId, ambushX + 260, ambushY - 340, ambushZ},
     }
 
     local archerFormation = {
-        {ambushArcherMonsterID, ambushX - 140, ambushY - 420, ambushZ},
-        {ambushArcherMonsterID, ambushX - 45, ambushY - 455, ambushZ},
-        {ambushArcherMonsterID, ambushX + 45, ambushY - 455, ambushZ},
-        {ambushArcherMonsterID, ambushX + 140, ambushY - 420, ambushZ},
-        {ambushArcherMonsterID, ambushX - 220, ambushY - 555, ambushZ},
-        {ambushArcherMonsterID, ambushX - 75, ambushY - 600, ambushZ},
-        {ambushArcherMonsterID, ambushX + 75, ambushY - 600, ambushZ},
-        {ambushArcherMonsterID, ambushX + 220, ambushY - 555, ambushZ},
+        {ambushArcherMonsterId, ambushX - 140, ambushY - 420, ambushZ},
+        {ambushArcherMonsterId, ambushX - 45, ambushY - 455, ambushZ},
+        {ambushArcherMonsterId, ambushX + 45, ambushY - 455, ambushZ},
+        {ambushArcherMonsterId, ambushX + 140, ambushY - 420, ambushZ},
+        {ambushArcherMonsterId, ambushX - 220, ambushY - 555, ambushZ},
+        {ambushArcherMonsterId, ambushX - 75, ambushY - 600, ambushZ},
+        {ambushArcherMonsterId, ambushX + 75, ambushY - 600, ambushZ},
+        {ambushArcherMonsterId, ambushX + 220, ambushY - 555, ambushZ},
     }
 
     for _, ambusherData in ipairs(meleeFormation) do
@@ -963,7 +931,7 @@ SummonKreeganAmbushEncounter = function(showDialog)
         table.insert(humanMapMonIndexes, ambusherIndex)
     end
 
-    local _, ambushContactIndex = SummonMonster(ambushMasterMonkMonsterID , ambushX + 280, ambushY - 180, ambushZ, true)
+    local _, ambushContactIndex = SummonMonster(ambushMasterMonkMonsterId , ambushX + 280, ambushY - 180, ambushZ, true)
     table.insert(humanMapMonIndexes, ambushContactIndex)
     vars.KreeganAmbushSwordsmanSummoned = true
 
@@ -1141,14 +1109,14 @@ end
 -- Messenger encounter --------------------------------------------------------
 FindEnemyMessenger = function()
     for _, mon in Map.Monsters do
-        if mon.Id == enemyMessengerMonsterID and mon.AIState ~= const.AIState.Removed then
+        if mon.Id == enemyMessengerMonsterId and mon.AIState ~= const.AIState.Removed then
             return mon
         end
     end
 end
 
 MakeEnemyMessengerFriendly = function()
-    local enemyMessengerMon = (enemyMessengerMonsterID + 2):div(3)
+    local enemyMessengerMon = (enemyMessengerMonsterId + 2):div(3)
     Game.HostileTxt[enemyMessengerMon][0] = 0
 end
 
@@ -1162,12 +1130,12 @@ CreateEnemyMessenger = function(mon, resetPowerHP)
     end
 
     MakeEnemyMessengerFriendly()
-    local enemyMessengerPowerMonsterID = 581 -- minotaur mage
-    ApplyMonsterPowerFromMonster(mon, Game.MonstersTxt[enemyMessengerPowerMonsterID], resetPowerHP == true)
+    local enemyMessengerPowerMonsterId = 581 -- minotaur mage
+    ApplyMonsterPowerFromMonster(mon, Game.MonstersTxt[enemyMessengerPowerMonsterId], resetPowerHP == true)
     mon.AIType = 3
     mon.NPC_ID = enemyMessengerNPC_ID
 
-    Game.MonstersTxt[enemyMessengerMonsterID].Name = "Marvin the Messenger"
+    Game.MonstersTxt[enemyMessengerMonsterId].Name = "Marvin the Messenger"
     Game.NPC[enemyMessengerNPC_ID].Name = "Marvin the Messenger"
     Game.NPC[enemyMessengerNPC_ID].Profession = 0
     Game.NPC[enemyMessengerNPC_ID].Pic = 442
@@ -1179,7 +1147,7 @@ SummonEnemyMessenger = function()
 
     if mon == nil then
         local messengerIndex
-        mon, messengerIndex = SummonMonster(enemyMessengerMonsterID, -296, 17180, 192, true)
+        mon, messengerIndex = SummonMonster(enemyMessengerMonsterId, -296, 17180, 192, true)
         CreateEnemyMessenger(mon, true)
         CreateAndSetMonsterEncounterFromIndexes(KreeganMessengerEncounterName, {messengerIndex}, blackshire)
         return
@@ -1188,7 +1156,7 @@ SummonEnemyMessenger = function()
     CreateEnemyMessenger(mon)
     if messengerEncounter == nil then
         CreateAndSetMonsterEncounterFromPredicate(KreeganMessengerEncounterName, function(_, candidate)
-            return candidate.Id == enemyMessengerMonsterID and candidate.AIState ~= const.AIState.Removed and candidate.NPC_ID == enemyMessengerNPC_ID
+            return candidate.Id == enemyMessengerMonsterId and candidate.AIState ~= const.AIState.Removed and candidate.NPC_ID == enemyMessengerNPC_ID
         end, blackshire)
     end
 end
@@ -1312,52 +1280,47 @@ ConfigureKreeganArmyFormationMonster = function(mon, monIndex)
     HoldKreeganArmyFormation(mon, mapvars.KreeganArmyFormationAnchors[monIndex])
 end
 
-makeTroop = function(monId, firstX, firstY, z, rows, cols, mapMonIndexes, configure)
-    local troop = {}
+summonHumanArmyInKriegspire = function()
+    local mapMonIndexes = {}
 
-    for i = 0, (rows * cols) - 1 do
-        local row = i % rows
-        local col = math.floor(i / rows)
-
-        local x = firstX + row * 100
-        local y = firstY + col * 100
-
-        local mon, monIndex = SummonMonster(monId, x, y, z, true)
-
-        if configure then
-            configure(mon, monIndex)
-        end
-
-        table.insert(troop, mon)
-
-        if mapMonIndexes then
+    local function SummonArmyFormation(monsterId, firstX, firstY, xAxisCount, yAxisCount)
+        local _, formationIndexes = MonsterFormation.Summon {
+            SummonPos = {
+                X = firstX + (xAxisCount - 1) * 50,
+                Y = firstY + (yAxisCount - 1) * 50,
+                Z = 255,
+            },
+            Formation = {
+                XAxisCount = xAxisCount,
+                YAxisCount = yAxisCount,
+                XAxisSpacing = 100,
+                YAxisSpacing = 100,
+                MonsterComposition = {DefaultMonsterId = monsterId},
+            },
+            Configure = ConfigureKreeganArmyFormationMonster,
+        }
+        for _, monIndex in ipairs(formationIndexes) do
             table.insert(mapMonIndexes, monIndex)
         end
     end
 
-    return troop
-end
-
-summonHumanArmyInKriegspire = function()
-    local mapMonIndexes = {}
-
     -- Left formation
-    makeTroop(armyArcher, 20200, -14750, 255, 2, 5, mapMonIndexes, ConfigureKreeganArmyFormationMonster)
-    makeTroop(armyFighter, 19700, -14750, 255, 3, 5, mapMonIndexes, ConfigureKreeganArmyFormationMonster)
+    SummonArmyFormation(armyArcher, 20200, -14750, 2, 5)
+    SummonArmyFormation(armyFighter, 19700, -14750, 3, 5)
 
     -- Middle formation
-    makeTroop(armyArcher, 20200, -14000, 255, 2, 5, mapMonIndexes, ConfigureKreeganArmyFormationMonster)
-    makeTroop(armyFighter, 19700, -14000, 255, 3, 5, mapMonIndexes, ConfigureKreeganArmyFormationMonster)
+    SummonArmyFormation(armyArcher, 20200, -14000, 2, 5)
+    SummonArmyFormation(armyFighter, 19700, -14000, 3, 5)
 
     -- Right formation
-    makeTroop(armyArcher, 20200, -13250, 255, 2, 5, mapMonIndexes, ConfigureKreeganArmyFormationMonster)
-    makeTroop(armyFighter, 19700, -13250, 255, 3, 5, mapMonIndexes, ConfigureKreeganArmyFormationMonster)
+    SummonArmyFormation(armyArcher, 20200, -13250, 2, 5)
+    SummonArmyFormation(armyFighter, 19700, -13250, 3, 5)
 
     -- One offensive mage with a support mage behind it between each formation.
-    makeTroop(armyOffensiveMage, 19700, -14175, 255, 1, 1, mapMonIndexes, ConfigureKreeganArmyFormationMonster)
-    makeTroop(armySupportMage, 19800, -14175, 255, 1, 1, mapMonIndexes, ConfigureKreeganArmyFormationMonster)
-    makeTroop(armyOffensiveMage, 19700, -13425, 255, 1, 1, mapMonIndexes, ConfigureKreeganArmyFormationMonster)
-    makeTroop(armySupportMage, 19800, -13425, 255, 1, 1, mapMonIndexes, ConfigureKreeganArmyFormationMonster)
+    SummonArmyFormation(armyOffensiveMage, 19700, -14175, 1, 1)
+    SummonArmyFormation(armySupportMage, 19800, -14175, 1, 1)
+    SummonArmyFormation(armyOffensiveMage, 19700, -13425, 1, 1)
+    SummonArmyFormation(armySupportMage, 19800, -13425, 1, 1)
 
     local commander, commanderIndex = SummonMonster(armyCommander, 19500, -13800, 255, true)
     ConfigureKreeganArmyFormationMonster(commander, commanderIndex)
@@ -1400,15 +1363,15 @@ MonitorKreeganAmbushThresholds = function()
     local hpPercent = khorTarr.HP * 100 / khorTarr.FullHP
     if hpPercent <= 70 and vars.KreeganAmbushKhorTarrSummoned70 ~= true then
         vars.KreeganAmbushKhorTarrSummoned70 = true
-        SummonKhorTarrReinforcements(devilSpawnMonsterID)
+        SummonKhorTarrReinforcements(devilSpawnMonsterId)
     end
     if hpPercent <= 40 and vars.KreeganAmbushKhorTarrSummoned40 ~= true then
         vars.KreeganAmbushKhorTarrSummoned40 = true
-        SummonKhorTarrReinforcements(devilWorkerMonsterID)
+        SummonKhorTarrReinforcements(devilWorkerMonsterId)
     end
     if hpPercent <= 20 and vars.KreeganAmbushKhorTarrSummoned20 ~= true then
         vars.KreeganAmbushKhorTarrSummoned20 = true
-        SummonKhorTarrReinforcements(devilWarriorMonsterID)
+        SummonKhorTarrReinforcements(devilWarriorMonsterId)
     end
 end
 
@@ -1569,7 +1532,7 @@ function events.ExitNPC()
 end
 
 function events.MonsterKilled(mon)
-    if InBlackshire() and mon.Id == enemyMessengerMonsterID and mon.NPC_ID == enemyMessengerNPC_ID then
+    if InBlackshire() and mon.Id == enemyMessengerMonsterId and mon.NPC_ID == enemyMessengerNPC_ID then
         vars.KreeganMessengerKilled = true
         MarkMonsterEncounterForRemoval(KreeganMessengerEncounterName, blackshire)
         return
@@ -1590,7 +1553,7 @@ function events.MonsterKilled(mon)
     end
 
     if InKriegspire() and vars.KreeganAmbushStarted == true and IsAmbushHumanMonster(mon) then
-        if mon.Id == ambushMasterMonkMonsterID then
+        if mon.Id == ambushMasterMonkMonsterId then
             vars.KreeganAmbushCorvinDead = true
             if vars.KreeganAmbushSide == "Ambushers" then
                 EndKreeganAmbushQuestline("Corvin has died, and the quest line ends with him")
