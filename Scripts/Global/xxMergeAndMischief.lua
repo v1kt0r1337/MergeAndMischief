@@ -1,8 +1,12 @@
 -- This file is for late overrides and global events that must apply after the other global scripts have loaded.
 local decenthouseMapName = "decenthouse.blv"
 
+local function IsPrinceOfThievesTeleportBlocked()
+    return type(PrinceOfThievesPrisonEscapeAnchored) == "function" and PrinceOfThievesPrisonEscapeAnchored() == true
+end
+
 function events.CanCastTownPortal(t)
-    if Map.Name == decenthouseMapName then
+    if Map.Name == decenthouseMapName or IsPrinceOfThievesTeleportBlocked() then
         t.CanCast = false
         Sleep(1)
         Game.ShowStatusText("Can't teleport now")
@@ -10,7 +14,7 @@ function events.CanCastTownPortal(t)
 end
 
 function events.CanCastLloyd(t)
-    if Map.Name == decenthouseMapName then
+    if Map.Name == decenthouseMapName or IsPrinceOfThievesTeleportBlocked() then
         t.Result = false
         Sleep(1)
         Game.ShowStatusText("Can't teleport now")
