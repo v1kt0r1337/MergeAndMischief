@@ -17,7 +17,19 @@ local FinishPrinceHideoutEscort
 
 local prisonEscapeMageEncounterName = "PrinceThievesPrisonEscapeMages"
 local prisonEscapeMageMonsterId = 631 -- Sorcerer
+local prisonEscapeMageSpellSourceMonsterId = 292 -- MM6 Sorcerer
 local prisonEscapeMageGroup = 72
+
+local function ApplyPrisonEscapeMageMonsterSetup()
+    local source = Game.MonstersTxt[prisonEscapeMageSpellSourceMonsterId]
+    local target = Game.MonstersTxt[prisonEscapeMageMonsterId]
+    target.Name = "Court Mage"
+    target.Spell2 = source.Spell
+    target.Spell2Skill = source.SpellSkill
+    target.Spell2Chance = source.SpellChance
+end
+
+ApplyPrisonEscapeMageMonsterSetup()
 
 -- Prison escape encounter setup ----------------------------------------------
 local prisonEscapeMagePositions = {
@@ -240,8 +252,8 @@ Quest{
         MarkMonsterEncounterForRemoval(prisonEscapeTroopEncounterName, P.FrozenHighlands)
         vars.PrinceThievesIvanAbductionTime = Game.Time
     end,
-    Gold = 1000,
-    Exp = 1000,
+    Gold = 5000,
+    Exp = 15000,
 }.SetTexts {
     FirstTopic = "Quest",
     Topic = "Free the Prince of Thieves",

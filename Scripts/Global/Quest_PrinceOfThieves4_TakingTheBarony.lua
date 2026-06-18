@@ -15,6 +15,7 @@ local fireArcherMonsterId = 477
 local soldierMonsterId = 536
 local veteranMonsterId = 537
 local magicianMonsterId = 632
+local magicianSpellSourceMonsterId = 293 -- MM6 Wizard
 local warlockMonsterId = 633
 
 -- Encounter IDs and guard tuning ---------------------------------------------
@@ -34,6 +35,24 @@ local baronyGuardReleasedGuardRadius = 6000
 local baronyCastleGuardMinimumSummonMinutes = 2
 local baronyCastleGuardMaximumSummonMinutes = 4
 local soldierMonsterName = Game.MonstersTxt[soldierMonsterId].Name
+
+local function ApplyBaronyHighMageMonsterSetup()
+    local source = Game.MonstersTxt[magicianSpellSourceMonsterId]
+    local mageCaptain = Game.MonstersTxt[magicianMonsterId]
+    local boss = Game.MonstersTxt[warlockMonsterId]
+
+    mageCaptain.Name = "Mage Captain"
+    mageCaptain.Spell2 = source.Spell
+    mageCaptain.Spell2Skill = source.SpellSkill
+    mageCaptain.Spell2Chance = source.SpellChance
+
+    boss.Name = "High Mage"
+    boss.Spell2 = source.Spell
+    boss.Spell2Skill = source.SpellSkill
+    boss.Spell2Chance = source.SpellChance
+end
+
+ApplyBaronyHighMageMonsterSetup()
 
 -- Guard compositions ----------------------------------------------------------
 local baronyGuardOrderedModulusComposition = {
@@ -586,7 +605,7 @@ Quest{
         P.RestoreRemovedFriendlyMonsters(P.FrozenHighlandsCastleAmbientRemovalKey)
         ApplyPermanentEndingState()
     end,
-    Exp = 10000,
+    Exp = 30000,
     Gold = 10000,
 }.SetTexts {
     Topic = "Stealing a barony",
@@ -1024,7 +1043,6 @@ SummonBaronyCastleGuardBoss = function()
         return
     end
 
-    Game.MonstersTxt[warlockMonsterId].Name = "High Mage"
     local monsters, indexes = MonsterFormation.Summon {
         SummonPos = baronyCastleGuardBoss.SummonPos,
         Formation = baronyCastleGuardBoss.Formation,

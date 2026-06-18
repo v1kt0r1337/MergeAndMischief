@@ -33,8 +33,8 @@ Quest{
     Done = function()
         vars.PrinceThievesIvanRescueTurnedIn = true
     end,
-    Gold = 2000,
-    Exp = 2000,
+    Gold = 5000,
+    Exp = 15000,
 }.SetTexts {
     Quest = "Save the Prince of Thieves from Ivan",
     Topic = "Ivan abducted the Prince",
