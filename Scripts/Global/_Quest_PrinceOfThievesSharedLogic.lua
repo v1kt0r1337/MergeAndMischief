@@ -170,19 +170,6 @@ local function TryAddPrinceFollower()
     return TryAddFollower(princeThievesNPC_ID)
 end
 
-local function ConfigureQuestMonster(mon, hostile, ally, group, options)
-    options = options or {}
-    mon.NoFlee = true
-    mon.Group = group
-    mon.Ally = ally
-    mon.Hostile = hostile
-    mon.ShowAsHostile = hostile
-    mon.HostileType = hostile and 4 or 3
-    mon.Direction = options.Direction or mon.Direction
-    mon.GuardRadius = options.GuardRadius or mon.GuardRadius
-    mon.AIState = options.AIState or const.AIState.Active
-end
-
 local function FriendlyMonsterDebugLog(message, ...)
     if PrinceOfThievesFriendlyMonsterDebug == true then
         print(string.format("[PrinceThievesFriendlyMonsterDebug] " .. message, ...))

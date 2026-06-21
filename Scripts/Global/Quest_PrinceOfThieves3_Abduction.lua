@@ -115,7 +115,9 @@ local function ApplyShadowGuildHardenedSetup(resetHP)
 end
 
 local function ConfigureShadowGuildPrince(mon)
-    P.ConfigureQuestMonster(mon, false, shadowGuildActorAlly, shadowGuildActorGroup)
+    P.ConfigureQuestMonster(mon, false, shadowGuildActorAlly, shadowGuildActorGroup, {
+        AIState = const.AIState.Active,
+    })
     mon.AIType = 3
     mon.NPC_ID = P.PrinceNPC
     Game.MonstersTxt[shadowGuildPrinceMonsterId].Name = "The Prince of Thieves"
@@ -126,7 +128,9 @@ end
 
 local function ConfigureShadowGuildIvan(mon, resetHP)
     ApplyMonsterPowerFromMonster(mon, Game.MonstersTxt[shadowGuildIvanPowerMonsterId], resetHP == true)
-    P.ConfigureQuestMonster(mon, true, shadowGuildActorAlly, shadowGuildActorGroup)
+    P.ConfigureQuestMonster(mon, true, shadowGuildActorAlly, shadowGuildActorGroup, {
+        AIState = const.AIState.Active,
+    })
     mon.NPC_ID = P.IvanMagyarNPC
     Game.MonstersTxt[shadowGuildIvanMonsterId].Name = "Ivan Magyar"
 end

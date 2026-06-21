@@ -608,7 +608,7 @@ end
 
 SetAmbushMonsterHostile = function(hostile, ally)
     -- Hostile monsters need their own encounter class as Ally so same-side demons do not fight each other; neutral uses 9999.
-    local resolvedAlly = ally ~= nil and ally or (hostile and S.GetMonsterEncounterAllyClass(S.AmbushHumanEncounterName) or 9999)
+    local resolvedAlly = ally ~= nil and ally or (hostile and GetMonsterEncounterAllyClass(S.AmbushHumanEncounterName, S.Kriegspire) or 9999)
     evt.ChangeGroupAlly{ambusherGroup, resolvedAlly}
     evt.SetMonGroupBit{ambusherGroup, const.MonsterBits.Hostile, hostile == true}
 
@@ -621,7 +621,7 @@ end
 
 SetKhorTarrMonsterHostile = function(hostile, ally)
     -- Hostile monsters need their own encounter class as Ally so same-side demons do not fight each other; neutral uses 9999.
-    local resolvedAlly = ally ~= nil and ally or (hostile and S.GetMonsterEncounterAllyClass(S.AmbushKhorTarrEncounterName) or 9999)
+    local resolvedAlly = ally ~= nil and ally or (hostile and GetMonsterEncounterAllyClass(S.AmbushKhorTarrEncounterName, S.Kriegspire) or 9999)
     evt.ChangeGroupAlly{khorTarrAmbushGroup, resolvedAlly}
     evt.SetMonGroupBit{khorTarrAmbushGroup, const.MonsterBits.Hostile, hostile == true}
 
@@ -633,8 +633,8 @@ SetKhorTarrMonsterHostile = function(hostile, ally)
 end
 
 ApplySpymasterAmbushFactionHostility = function()
-    local khorTarrSideClasses = S.GetMonsterEncounterClasses(S.AmbushKhorTarrEncounterName)
-    local humanSideClasses = S.GetMonsterEncounterClasses(S.AmbushHumanEncounterName)
+    local khorTarrSideClasses = GetMonsterEncounterClasses(S.AmbushKhorTarrEncounterName, S.Kriegspire)
+    local humanSideClasses = GetMonsterEncounterClasses(S.AmbushHumanEncounterName, S.Kriegspire)
 
     for _, khorTarrSideClass in ipairs(khorTarrSideClasses) do
         for _, humanSideClass in ipairs(humanSideClasses) do

@@ -43,7 +43,7 @@ NPCTopic {
     end,
     Topic = "Matron of the orphanage",
     Text = [[
-I am the matron of this orphanage. 
+I am the matron of this orphanage.
 
 The children needs a stern hand. I will not tolerate any mischief or disobedience.]]
 }
@@ -243,7 +243,7 @@ end
 
 function events.AfterLoadMap()
     if Map.Name == FreeHaven then
-        -- move the previous (unimportant) occupant to the nearby house 
+        -- move the previous (unimportant) occupant to the nearby house
         Game.NPC[1156].House = 1560
         if vars.Quests[Quest_KillMatronOfOrphanage] ~= "Done" then
             BranchedFightMatronQuest()

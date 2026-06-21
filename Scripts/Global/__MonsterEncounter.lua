@@ -63,6 +63,10 @@ function CreateAndSetMonsterEncounterFromRange(encounterName, firstIndex, lastIn
     return CreateAndSetMonsterEncounterFromIndexes(encounterName, mapMonIndexes, mapName)
 end
 
+function MonsterClass(monsterId)
+    return math.floor((monsterId + 2) / 3)
+end
+
 -- Creates a reusable monster encounter from known `Map.Monsters[index]` slots.
 -- Each record stores the current map name plus `{index, id, group}` for a monster.
 function CreateMonsterEncounter(mapMonIndexes)
@@ -247,6 +251,75 @@ function AddMonsterEncounterIndexes(encounterName, mapMonIndexes, mapName)
     end
 
     return encounter
+end
+
+function AddOrCreateMonsterEncounterIndexes(encounterName, mapMonIndexes, mapName)
+    if mapMonIndexes == nil or #mapMonIndexes == 0 then
+        return nil, "missing_indexes"
+    end
+
+    local encounter = GetMonsterEncounter(encounterName, mapName)
+    if encounter ~= nil then
+        return AddMonsterEncounterIndexes(encounterName, mapMonIndexes, mapName)
+    end
+
+    return CreateAndSetMonsterEncounterFromIndexes(encounterName, mapMonIndexes, mapName)
+end
+
+function TrackMonsterEncounterMonster(encounterName, mon, mapName)
+    if mon == nil then
+        return nil, "missing_monster"
+    end
+
+    local encounter = GetMonsterEncounter(encounterName, mapName)
+    if MonsterEncounterContainsMonster(encounter, mon) == true then
+        return encounter
+    end
+
+    return AddOrCreateMonsterEncounterIndexes(encounterName, {mon:GetIndex()}, mapName)
+end
+
+function NamedMonsterEncounterContainsMonster(encounterName, mon, mapName)
+    return MonsterEncounterContainsMonster(GetMonsterEncounter(encounterName, mapName), mon) == true
+end
+
+function FindMonsterEncounterMonster(encounterName, mapName)
+    local found
+    ForEachMonsterEncounter(GetMonsterEncounter(encounterName, mapName), function(_, mon)
+        if found == nil then
+            found = mon
+        end
+    end, true)
+    return found
+end
+
+function GetMonsterEncounterClasses(encounterName, mapName)
+    local classesById = {}
+    local classes = {}
+    local encounter = GetMonsterEncounter(encounterName, mapName)
+
+    if type(encounter) ~= "table" or type(encounter.monsters) ~= "table" then
+        return classes
+    end
+
+    for _, record in ipairs(encounter.monsters) do
+        if type(record.id) == "number" then
+            local class = MonsterClass(record.id)
+            if classesById[class] ~= true then
+                classesById[class] = true
+                table.insert(classes, class)
+            end
+        end
+    end
+
+    return classes
+end
+
+-- Uses the first monster class in a tracked encounter as that side's ally class.
+-- If the encounter is missing or empty, 9999 keeps the monsters neutral/friendly.
+function GetMonsterEncounterAllyClass(encounterName, mapName)
+    local classes = GetMonsterEncounterClasses(encounterName, mapName)
+    return classes[1] or 9999
 end
 
 function GetMonsterEncounter(encounterName, mapName)

@@ -80,39 +80,6 @@ local function SafeToInterruptParty()
     return Game.CurrentScreen == 0 and not (Party.EnemyDetectorRed or Party.EnemyDetectorYellow)
 end
 
-local function MonsterClass(monsterId)
-    return math.floor((monsterId + 2) / 3)
-end
-
-local function GetMonsterEncounterClasses(encounterName)
-    local classesById = {}
-    local classes = {}
-    local encounter = GetMonsterEncounter(encounterName, kriegspire)
-
-    if type(encounter) ~= "table" or type(encounter.monsters) ~= "table" then
-        return classes
-    end
-
-    for _, record in ipairs(encounter.monsters) do
-        if type(record.id) == "number" then
-            local class = MonsterClass(record.id)
-            if classesById[class] ~= true then
-                classesById[class] = true
-                table.insert(classes, class)
-            end
-        end
-    end
-
-    return classes
-end
-
--- Uses the first monster class in a tracked encounter as that side's ally class.
--- If the encounter is missing or empty, 9999 keeps the monsters neutral/friendly.
-local function GetMonsterEncounterAllyClass(encounterName)
-    local classes = GetMonsterEncounterClasses(encounterName)
-    return classes[1] or 9999
-end
-
 local function LocalizeMonsterTxt()
     if type(LocalMonstersTxt) == "function" then
         LocalMonstersTxt()
@@ -161,21 +128,6 @@ local function CreateAmbushContactNPC()
     Game.NPC[ambushContactNPC_ID].Name = "Corvin"
     Game.NPC[ambushContactNPC_ID].Pic = 0035
     Game.NPC[ambushContactNPC_ID].Profession = 0
-end
-
--- Monster helpers ------------------------------------------------------------
-local function ConfigureSpymasterQuestMonster(mon, hostile, ally, group)
-    mon.NoFlee = true
-    mon.GuardRadius = math.max(mon.GuardRadius, 6000)
-    mon.Group = group or mon.Group
-    if ally ~= nil then
-        mon.Ally = ally
-    end
-    if hostile ~= nil then
-        mon.Hostile = hostile
-        mon.ShowAsHostile = hostile
-        mon.HostileType = hostile and 4 or 3
-    end
 end
 
 local function CreateKhorTarrMonster(mon, resetHP)
@@ -249,12 +201,10 @@ Spymaster.InBlackshire = InBlackshire
 Spymaster.InKriegspire = InKriegspire
 Spymaster.InFreehaven = InFreehaven
 Spymaster.SafeToInterruptParty = SafeToInterruptParty
-Spymaster.GetMonsterEncounterClasses = GetMonsterEncounterClasses
-Spymaster.GetMonsterEncounterAllyClass = GetMonsterEncounterAllyClass
 Spymaster.CreateCarterNPCBeforeReveal = CreateCarterNPCBeforeReveal
 Spymaster.CreateCarterNPCAfterReveal = CreateCarterNPCAfterReveal
 Spymaster.CreateAmbushContactNPC = CreateAmbushContactNPC
-Spymaster.ConfigureQuestMonster = ConfigureSpymasterQuestMonster
+Spymaster.ConfigureQuestMonster = ConfigureQuestMonster
 Spymaster.CreateKhorTarrMonster = CreateKhorTarrMonster
 Spymaster.ApplyVeteranArcher = ApplyVeteranArcher
 Spymaster.TryAddKhorTarrFollower = TryAddKhorTarrFollower
