@@ -12,7 +12,7 @@ function events.CalcDamageToMonster(t)
         if Game.MonstersTxt[t.Monster.Id].Name == "Farmer Todd" and t.Monster.HP > 0 and (t.Monster.HP == t.Monster.FullHP or t.Monster.FullHP ~= Game.MonstersTxt[masterSwordsmanId].FullHP) then
             -- if players opens a menu/talks to Farmer Todd, his power is restored to that of a peasant this section fixes that.
             local hpRatio  = t.Monster.HP / t.Monster.FullHP 
-            Quest_Goblinwatch3_CreateTodd(t.Monster)
+            Quest_TheGoblinsStrikeBack2_CreateTodd(t.Monster)
             t.Monster.HP = math.max(1, math.floor(t.Monster.FullHP * hpRatio))
             -- Ensure that Farmer Todd is not invulnerable and this condition only triggers if necessary
             if t.Damage > 0 then
@@ -22,7 +22,7 @@ function events.CalcDamageToMonster(t)
             end
         end
         local guardId = 553
-        if vars.Quests["Quest_Goblinwatch4"] == "Given" and (t.Monster.Id == guardId or t.Monster.Id == guardId+1 or t.Monster.Id == guardId+2) then
+        if vars.Quests["Quest_TheGoblinsStrikeBack3"] == "Given" and (t.Monster.Id == guardId or t.Monster.Id == guardId+1 or t.Monster.Id == guardId+2) then
             t.Result = t.Damage
         end
     end
@@ -32,7 +32,7 @@ function events.CalcDamageToMonster(t)
         local ogreChieftainId = 594 
         if Game.MonstersTxt[t.Monster.Id].Name == "Lord Nilbog" and t.Monster.HP > 0 and (t.Monster.HP == t.Monster.FullHP or t.Monster.FullHP ~= Game.MonstersTxt[ogreChieftainId].FullHP) then
             local hpRatio  = t.Monster.HP / t.Monster.FullHP 
-            Quest_Goblinwatch5_MonsterLordNilbog(t.Monster)
+            Quest_TheGoblinsStrikeBack4_MonsterLordNilbog(t.Monster)
             t.Monster.HP = math.max(1, math.floor(t.Monster.FullHP * hpRatio))
             -- Ensure that this only happens if needed
             if t.Result < 1 then
