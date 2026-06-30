@@ -2,7 +2,7 @@
 zzMaw-Map.lua
 --needed for chest/objects loot
 function events.BeforeLoadMap()
-	if Map.Name == "decenthouse.blv" then return end
+	if Map.Name == "housedecent.blv" then return end
 ]]--
 
 function events.CalcDamageToMonster(t)
@@ -27,7 +27,7 @@ function events.CalcDamageToMonster(t)
         end
     end
 
-    if Map.Name == "decenthouse.blv" then
+    if Map.Name == "housefine.blv" then
         -- Hack to prevent MAW making Lord Nilbog weak as a normal goblin, might still not be properly bolstered
         local ogreChieftainId = 594 
         if Game.MonstersTxt[t.Monster.Id].Name == "Lord Nilbog" and t.Monster.HP > 0 and (t.Monster.HP == t.Monster.FullHP or t.Monster.FullHP ~= Game.MonstersTxt[ogreChieftainId].FullHP) then

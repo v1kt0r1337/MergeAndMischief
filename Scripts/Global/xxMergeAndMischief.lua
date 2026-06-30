@@ -1,12 +1,11 @@
 -- This file is for late overrides and global events that must apply after the other global scripts have loaded.
-local decenthouseMapName = "decenthouse.blv"
 
 local function IsPrinceOfThievesTeleportBlocked()
     return type(PrinceOfThievesPrisonEscapeAnchored) == "function" and PrinceOfThievesPrisonEscapeAnchored() == true
 end
 
 function events.CanCastTownPortal(t)
-    if Map.Name == decenthouseMapName or IsPrinceOfThievesTeleportBlocked() then
+    if HouseInside.IsMap(Map.Name) or IsPrinceOfThievesTeleportBlocked() then
         t.CanCast = false
         Sleep(1)
         Game.ShowStatusText("Can't teleport now")
@@ -14,25 +13,44 @@ function events.CanCastTownPortal(t)
 end
 
 function events.CanCastLloyd(t)
-    if Map.Name == decenthouseMapName or IsPrinceOfThievesTeleportBlocked() then
+    if HouseInside.IsMap(Map.Name) or IsPrinceOfThievesTeleportBlocked() then
         t.Result = false
         Sleep(1)
         Game.ShowStatusText("Can't teleport now")
     end
 end
 
-function EnterDecentHouseMap(purpose)
+function EnterHouseInsideMap(purpose)
     evt.PlaySound(6)
     vars.MapStatOfMapBeforeEntering = Map.MapStatsIndex
-    vars.decentHousePurpose = purpose
+    vars.HouseInsidePurpose = purpose
     evt.MoveToMap {
-        Name = decenthouseMapName,
-        Direction = 1000
+        Name = HouseInside.MapName,
+        Direction = 1000,
+        X = 280,
+        Y = 63,
+        Z = -159,
     }
 end
 
+function EnterDecentHouseMap(purpose)
+    EnterHouseInsideMap(purpose)
+end
+
+function EnterHouseFineMap(purpose)
+    EnterHouseInsideMap(purpose)
+end
+
+function EnterhouseInteriorMap(purpose)
+    EnterHouseInsideMap(purpose)
+end
+
+function EnterHouseInteriorMap(purpose)
+    EnterHouseInsideMap(purpose)
+end
+
 function events.CanSaveGame(t)
-    if Map.Name == decenthouseMapName then
+    if HouseInside.IsMap(Map.Name) then
         if t.SaveKind ~= 1 then
             Game.ShowStatusText("Can't save here")
         end

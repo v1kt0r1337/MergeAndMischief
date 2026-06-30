@@ -1,1 +1,14 @@
 TODO.md
+
+## early prototypes
+Scripts/Global/TowerDefence.lua
+Scripts/Modules/TowerDefence/*
+
+# raw map files
+*.odm
+*.ddm
+*.mtl
+*.obj
+*.textures
+*.blv
+*.dlv

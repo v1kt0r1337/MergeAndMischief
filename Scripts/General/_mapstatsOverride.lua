@@ -1,5 +1,5 @@
 function events.BeforeLoadMap()
-    if Map.Name == "decenthouse.blv" then
+    if HouseInside.IsMap(Map.Name) then
         if vars.MapStatOfMapBeforeEntering ~= nil then
             -- sets the MapStatsIndex to the index of the map party entered from. 
             Map.MapStatsIndex = vars.MapStatOfMapBeforeEntering
@@ -7,8 +7,8 @@ function events.BeforeLoadMap()
     end
 end
 function events.LeaveMap()
-    if Map.Name == "decenthouse.blv" then
-        vars.decentHousePurpose = nil
+    if HouseInside.IsMap(Map.Name) then
+        vars.HouseInsidePurpose = nil
         -- removes all monsters in the map for later reuse
         for _, m in Map.Monsters do
             m.AIState = const.AIState.Removed
